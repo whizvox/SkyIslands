@@ -1,0 +1,7 @@
+name: Sky-Islands
+version: '${version}'
+main: me.whizvox.skyislands.SkyIslands
+api-version: '26.3'
+load: POSTWORLD
+authors: [ whizvox ]
+description: Allow players to create and manage their own sky islands
