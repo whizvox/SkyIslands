@@ -1,7 +1,7 @@
 package me.whizvox.skyislands.json;
 
 import com.google.gson.*;
-import me.whizvox.skyislands.util.i18n.Messages;
+import me.whizvox.skyislands.i18n.Messages;
 
 import java.lang.reflect.Type;
 

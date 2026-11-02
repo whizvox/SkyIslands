@@ -1,4 +1,4 @@
-package me.whizvox.skyislands.util.i18n;
+package me.whizvox.skyislands.i18n;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 

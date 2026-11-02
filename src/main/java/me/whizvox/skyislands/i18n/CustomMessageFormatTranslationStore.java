@@ -1,4 +1,4 @@
-package me.whizvox.skyislands.util.i18n;
+package me.whizvox.skyislands.i18n;
 
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNullByDefault;

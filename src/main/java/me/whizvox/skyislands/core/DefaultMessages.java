@@ -1,6 +1,6 @@
 package me.whizvox.skyislands.core;
 
-import me.whizvox.skyislands.util.i18n.Messages;
+import me.whizvox.skyislands.i18n.Messages;
 
 public class DefaultMessages {
 

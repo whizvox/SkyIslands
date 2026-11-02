@@ -1,4 +1,4 @@
-package me.whizvox.skyislands.util.i18n;
+package me.whizvox.skyislands.i18n;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -94,7 +94,7 @@ public abstract class CustomTranslationStore<T> implements TranslationStore<T> {
 
         @Nullable T translate(Locale locale) {
             T comp = translations.get(locale);
-            if (comp != null) {
+            if (comp == null) {
                 comp = translations.get(Locale.of(locale.getLanguage()));
                 if (comp == null) {
                     comp = translations.get(defaultLocale);

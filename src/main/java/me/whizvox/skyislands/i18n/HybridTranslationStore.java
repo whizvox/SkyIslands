@@ -1,10 +1,9 @@
-package me.whizvox.skyislands.util.i18n;
+package me.whizvox.skyislands.i18n;
 
 import com.google.gson.stream.JsonReader;
 import me.whizvox.skyislands.SkyIslands;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.KeyPattern;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.translation.GlobalTranslator;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -25,26 +24,21 @@ public class HybridTranslationStore {
 
     private final Pattern LANGUAGE_CODE_PATTERN = Pattern.compile("[a-z]{2,3}(-[a-zA-Z0-9-]+)?");
 
-    private final CustomTranslationStore<Component> componentTranslationStore;
+    private final CustomMiniMessageTranslationStore componentTranslationStore;
     private final CustomMessageFormatTranslationStore messageFormatTranslationStore;
-    private MiniMessage miniMessage;
     private boolean hasRegisteredGlobal;
 
-    public HybridTranslationStore(@KeyPattern.Namespace String namespaceName, Locale defaultLocale) {
-        componentTranslationStore = new CustomComponentTranslationStore(
+    public HybridTranslationStore(@KeyPattern.Namespace String namespaceName, Locale defaultLocale, MiniMessage miniMessage) {
+        componentTranslationStore = new CustomMiniMessageTranslationStore(
             Key.key(namespaceName, "components"),
-            defaultLocale
+            defaultLocale,
+            miniMessage
         );
         messageFormatTranslationStore = new CustomMessageFormatTranslationStore(
             Key.key(namespaceName, "message_formats"),
             defaultLocale
         );
-        miniMessage = MiniMessage.miniMessage();
         hasRegisteredGlobal = false;
-    }
-
-    public void setMiniMessage(MiniMessage miniMessage) {
-        this.miniMessage = miniMessage;
     }
 
     public void registerGlobal() {
@@ -70,7 +64,7 @@ public class HybridTranslationStore {
                              JsonReader reader = new JsonReader(new InputStreamReader(in))) {
                             Messages messages = SkyIslands.getInstance().getGson().fromJson(reader, Messages.class);
                             messages.miniMessageTranslations().forEach((key, value) ->
-                                componentTranslationStore.register(key, locale, miniMessage.deserialize(value))
+                                componentTranslationStore.register(key, locale, value)
                             );
                             messages.messageFormatTranslations().forEach((key, value) ->
                                 messageFormatTranslationStore.register(key, locale, new MessageFormat(value, locale))

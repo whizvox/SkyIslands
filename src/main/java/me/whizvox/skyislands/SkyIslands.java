@@ -9,6 +9,8 @@ import me.whizvox.skyislands.command.IslandCommand;
 import me.whizvox.skyislands.command.util.TranslatableCommandExceptionType;
 import me.whizvox.skyislands.core.DefaultMessages;
 import me.whizvox.skyislands.core.PluginConfiguration;
+import me.whizvox.skyislands.i18n.HybridTranslationStore;
+import me.whizvox.skyislands.i18n.Messages;
 import me.whizvox.skyislands.island.Island;
 import me.whizvox.skyislands.island.IslandWorld;
 import me.whizvox.skyislands.island.IslandWorldProperties;
@@ -17,11 +19,10 @@ import me.whizvox.skyislands.json.IslandSerializer;
 import me.whizvox.skyislands.json.IslandWorldPropertiesSerializer;
 import me.whizvox.skyislands.json.IslandWorldSerializer;
 import me.whizvox.skyislands.json.MessagesSerializer;
-import me.whizvox.skyislands.util.i18n.HybridTranslationStore;
-import me.whizvox.skyislands.util.i18n.Messages;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TranslatableComponent;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.bukkit.Bukkit;
 import org.bukkit.permissions.Permission;
@@ -63,7 +64,7 @@ public final class SkyIslands extends JavaPlugin {
             .registerTypeAdapter(IslandWorldProperties.class, new IslandWorldPropertiesSerializer())
             .registerTypeAdapter(IslandWorld.class, new IslandWorldSerializer())
             .create();
-        hybridTranslationStore = new HybridTranslationStore("skyislands", Locale.ENGLISH);
+        hybridTranslationStore = new HybridTranslationStore("skyislands", Locale.ENGLISH, MiniMessage.miniMessage());
         pluginConfig = new PluginConfiguration();
         islandsManager = new IslandWorldsManager();
         langDir = null;
