@@ -49,6 +49,11 @@ public class HybridTranslationStore {
         }
     }
 
+    public void registerAll(Messages messages, Locale locale) {
+        messages.miniMessageTranslations().forEach((key, value) -> componentTranslationStore.register(key, locale, value));
+        messages.messageFormatTranslations().forEach((key, value) -> messageFormatTranslationStore.register(key, locale, value));
+    }
+
     public void reload(Path messagesDir) {
         componentTranslationStore.unregisterAll();
         messageFormatTranslationStore.unregisterAll();

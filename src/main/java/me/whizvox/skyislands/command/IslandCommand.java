@@ -1,22 +1,26 @@
 package me.whizvox.skyislands.command;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
-import me.whizvox.skyislands.SkyIslands;
 import me.whizvox.skyislands.command.argument.OfflinePlayerArgumentType;
 import me.whizvox.skyislands.island.IslandWorldProperties;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.command.CommandSender;
+import org.bukkit.generator.BiomeProvider;
+import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.generator.WorldInfo;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static me.whizvox.skyislands.SkyIslands.*;
@@ -36,11 +40,12 @@ public class IslandCommand {
 
     private static int getVersion(CommandContext<CommandSourceStack> context) {
         context.getSource().getSender().sendMessage(tl("command.version", Map.of("version",
-            SkyIslands.getInstance().getPluginMeta().getVersion())));
+            getInstance().getPluginMeta().getVersion())));
         return SINGLE_SUCCESS;
     }
 
-    public static int createWorld(CommandSender sender, World world, IslandWorldProperties properties) throws CommandSyntaxException {
+    public static int createWorld(CommandSender sender, String worldName, IslandWorldProperties properties)
+            throws CommandSyntaxException {
         int maxPossibleIslands = (3749998 / properties.getPlotSize()) * (3749998 / properties.getPlotSize());
         if (properties.getMaxIslands() > maxPossibleIslands) {
             properties.setMaxIslands(maxPossibleIslands);
@@ -48,15 +53,42 @@ public class IslandCommand {
         if (properties.getBuildLimitSize() > properties.getPlotSize()) {
             throw cmdex("argument.buildLimitTooLarge");
         }
-        SkyIslands.getInstance().getIslandsManager().createWorld(world, properties)
-            .ifPresentOrElse(islandWorld ->
-                    sender.sendMessage(tl("createWorld.success", Map.of("world", islandWorld.getWorld().getName()))),
-                () -> sender.sendMessage(tl("createWorld.fail.alreadyIslandWorld")));
+        World world = Bukkit.getWorld(worldName);
+        if (world != null) {
+            throw cmdex("argument.worldAlreadyExists");
+        }
+        NamespacedKey worldKey = key(worldName);
+        if (worldKey == null) {
+            throw cmdex("argument.invalidWorldName");
+        }
+        world = Objects.requireNonNull(
+                new WorldCreator(worldKey)
+                        .type(WorldType.NORMAL)
+                        .biomeProvider(new BiomeProvider() {
+                            @Override
+                            public Biome getBiome(WorldInfo worldInfo, int x, int y, int z) {
+                                return Biome.PLAINS;
+                            }
+                            @Override
+                            public List<Biome> getBiomes(WorldInfo worldInfo) {
+                                return List.of(Biome.PLAINS);
+                            }
+                        })
+                        .generator(new ChunkGenerator() {})
+                        .createWorld(),
+                "Failed to create sky island world"
+        );
+        getInstance().getIslandsManager().createWorld(world, properties)
+            .ifPresentOrElse(
+                islandWorld -> sender.sendMessage(
+                        tl("createWorld.success", Map.of("world", islandWorld.getWorld().getKey()))
+                ),
+                () -> sender.sendMessage(tl("createWorld.fail.alreadyIslandWorld"))
+            );
         return SINGLE_SUCCESS;
     }
 
     public static int createIsland(CommandSender sender, @Nullable OfflinePlayer owner) {
-
         return SINGLE_SUCCESS;
     }
 
@@ -80,12 +112,12 @@ public class IslandCommand {
                 )
                 .then(Commands.literal("createworld")
                     .requires(source -> hasPermission(source, PERMISSION_WORLD_CREATE))
-                    .then(Commands.argument("world", ArgumentTypes.world())
+                    .then(Commands.argument("worldName", StringArgumentType.word())
                         .then(Commands.argument("plotSize", IntegerArgumentType.integer(1, 10000))
                             .then(Commands.argument("buildLimit", IntegerArgumentType.integer(1, 10000))
                                 .executes(context -> createWorld(
                                     context.getSource().getSender(),
-                                    context.getArgument("world", World.class),
+                                    StringArgumentType.getString(context, "worldName"),
                                     new IslandWorldProperties(
                                         IntegerArgumentType.getInteger(context, "buildLimit"),
                                         IntegerArgumentType.getInteger(context, "plotSize")
@@ -95,7 +127,7 @@ public class IslandCommand {
                         )
                         .executes(context -> createWorld(
                             context.getSource().getSender(),
-                            context.getArgument("world", World.class),
+                            StringArgumentType.getString(context, "worldName"),
                             new IslandWorldProperties()
                         ))
                     )

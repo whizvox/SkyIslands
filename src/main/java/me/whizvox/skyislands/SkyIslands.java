@@ -25,12 +25,15 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.structure.Structure;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,8 +45,6 @@ import java.util.logging.LogRecord;
 @NotNullByDefault
 public final class SkyIslands extends JavaPlugin {
 
-    @SuppressWarnings("DataFlowIssue")
-    private static SkyIslands instance = null;
     private final Gson gson;
     private final HybridTranslationStore hybridTranslationStore;
     private final PluginConfiguration pluginConfig;
@@ -72,6 +73,117 @@ public final class SkyIslands extends JavaPlugin {
         prevSaveInterval = -1;
         saveTask = null;
     }
+
+    public Gson getGson() {
+        return gson;
+    }
+
+    public PluginConfiguration getPluginConfig() {
+        return pluginConfig;
+    }
+
+    public IslandWorldsManager getIslandsManager() {
+        return islandsManager;
+    }
+
+    public void reload() {
+        // configuration file
+        reloadConfig(); // reload configuration file
+        pluginConfig.setup(getConfig()); // re-initialize to use the reloaded configuration file
+        pluginConfig.generateDefaults(); // generate default values using the reloaded configuration file
+        pluginConfig.load(); // reload the plugin-specific configuration values
+        pluginConfig.save(getDataPath().resolve("config.yml")); // save in case any invalid values were corrected
+
+        // sky island world files
+        if (Files.isDirectory(Objects.requireNonNull(worldsDir, "Plugin is not initialized"))) {
+            islandsManager.load(worldsDir);
+        } else {
+            try {
+                Files.createDirectories(worldsDir);
+            } catch (IOException e) {
+                throw new RuntimeException("Could not create worlds directory at " + worldsDir, e);
+            }
+        }
+
+        // language files
+        boolean loadTranslations = Files.isDirectory(Objects.requireNonNull(langDir, "Plugin is not initialized"));
+        Path fallbackLangPath = langDir.resolve("en.json");
+        if (!Files.isRegularFile(fallbackLangPath)) {
+            try {
+                if (!loadTranslations) {
+                    Files.createDirectories(langDir);
+                }
+                var messages = new DefaultMessages();
+                try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(fallbackLangPath))) {
+                    gson.toJson(messages.getMessages(), writer);
+                }
+                hybridTranslationStore.registerAll(messages.getMessages(), Locale.ENGLISH);
+            } catch (IOException e) {
+                throw new RuntimeException("Could not create lang directory at " + langDir, e);
+            }
+        }
+        if (loadTranslations) {
+            hybridTranslationStore.reload(langDir);
+        }
+
+        // one of the config options deals with the save interval
+        if (prevSaveInterval != pluginConfig.getSaveInterval()) {
+            prevSaveInterval = pluginConfig.getSaveInterval();
+            if (saveTask != null) {
+                saveTask.cancel();
+                saveTask = null;
+                info("Island worlds save task has been cancelled");
+            }
+            if (prevSaveInterval > 0) {
+                saveTask = Bukkit.getAsyncScheduler().runAtFixedRate(this, _ -> {
+                    islandsManager.save(Objects.requireNonNull(worldsDir, "Plugin is not initialized"));
+                    fine("Completed autosave of island worlds");
+                }, prevSaveInterval, prevSaveInterval, TimeUnit.MINUTES);
+                info("Scheduled island worlds save task to run every {0} minutes", prevSaveInterval);
+            }
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        langDir = getDataPath().resolve("lang");
+        worldsDir = getDataPath().resolve("worlds");
+        reload();
+        hybridTranslationStore.registerGlobal();
+
+        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
+            IslandCommand.register(event.registrar());
+        });
+
+        // register skyblock island structure
+        try (InputStream in = getResource("sky_island_basic.nbt")) {
+            if (in != null) {
+                Structure islandStructure = Bukkit.getStructureManager().loadStructure(in);
+                Bukkit.getStructureManager().registerStructure(
+                        Objects.requireNonNull(key("sky_island_basic")),
+                        islandStructure
+                );
+            } else {
+                throw new RuntimeException("Sky island structure file is missing. This should not happen!");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load sky island structure", e);
+        }
+    }
+
+    @Override
+    public void onDisable() {
+        if (!islandsManager.save(Objects.requireNonNull(worldsDir, "Plugin is not initialized"))) {
+            severe("Sky island worlds are still saving, somehow. Did something break?");
+        }
+        if (saveTask != null) {
+            saveTask.cancel();
+            saveTask = null;
+        }
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    private static SkyIslands instance = null;
 
     public static SkyIslands getInstance() {
         return instance;
@@ -142,96 +254,8 @@ public final class SkyIslands extends JavaPlugin {
         return new Permission("skyislands." + name);
     }
 
-    public Gson getGson() {
-        return gson;
-    }
-
-    public PluginConfiguration getPluginConfig() {
-        return pluginConfig;
-    }
-
-    public IslandWorldsManager getIslandsManager() {
-        return islandsManager;
-    }
-
-    public void reload() {
-        // configuration file
-        reloadConfig(); // reload configuration file
-        pluginConfig.setup(getConfig()); // re-initialize to use the reloaded configuration file
-        pluginConfig.generateDefaults(); // generate default values using the reloaded configuration file
-        pluginConfig.load(); // reload the plugin-specific configuration values
-        pluginConfig.save(getDataPath().resolve("config.yml")); // save in case any invalid values were corrected
-
-        // sky island world files
-        if (Files.isDirectory(Objects.requireNonNull(worldsDir, "Plugin is not initialized"))) {
-            islandsManager.load(worldsDir);
-        } else {
-            try {
-                Files.createDirectories(worldsDir);
-            } catch (IOException e) {
-                throw new RuntimeException("Could not create worlds directory at " + worldsDir, e);
-            }
-        }
-
-        // language files
-        boolean loadTranslations = Files.isDirectory(Objects.requireNonNull(langDir, "Plugin is not initialized"));
-        Path fallbackLangPath = langDir.resolve("en.json");
-        if (!Files.isRegularFile(fallbackLangPath)) {
-            try {
-                if (!loadTranslations) {
-                    Files.createDirectories(langDir);
-                }
-                var messages = new DefaultMessages();
-                try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(fallbackLangPath))) {
-                    gson.toJson(messages.getMessages(), writer);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Could not create lang directory at " + langDir, e);
-            }
-        }
-        if (loadTranslations) {
-            hybridTranslationStore.reload(langDir);
-        }
-
-        // one of the config options deals with the save interval
-        if (prevSaveInterval != pluginConfig.getSaveInterval()) {
-            prevSaveInterval = pluginConfig.getSaveInterval();
-            if (saveTask != null) {
-                saveTask.cancel();
-                saveTask = null;
-                info("Island worlds save task has been cancelled");
-            }
-            if (prevSaveInterval > 0) {
-                saveTask = Bukkit.getAsyncScheduler().runAtFixedRate(this, _ -> {
-                    islandsManager.save(Objects.requireNonNull(worldsDir, "Plugin is not initialized"));
-                    fine("Completed autosave of island worlds");
-                }, prevSaveInterval, prevSaveInterval, TimeUnit.MINUTES);
-                info("Scheduled island worlds save task to run every {0} minutes", prevSaveInterval);
-            }
-        }
-    }
-
-    @Override
-    public void onEnable() {
-        langDir = getDataPath().resolve("lang");
-        worldsDir = getDataPath().resolve("worlds");
-        reload();
-        hybridTranslationStore.registerGlobal();
-
-        getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-            IslandCommand.register(event.registrar());
-        });
-    }
-
-    @Override
-    public void onDisable() {
-        if (!islandsManager.save(Objects.requireNonNull(worldsDir, "Plugin is not initialized"))) {
-            severe("Sky island worlds are still saving, somehow. Did something break?");
-        }
-        if (saveTask != null) {
-            saveTask.cancel();
-            saveTask = null;
-        }
+    public static @Nullable NamespacedKey key(String name) {
+        return NamespacedKey.fromString(name, instance);
     }
 
 }

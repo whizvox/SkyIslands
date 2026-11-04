@@ -1,4 +1,4 @@
-name: Sky-Islands
+name: SkyIslands
 version: '${version}'
 main: me.whizvox.skyislands.SkyIslands
 api-version: '26.3'

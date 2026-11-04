@@ -30,6 +30,8 @@ public class DefaultMessages {
         minimsg("createWorld.fail.alreadyIslandWorld", "<red>That world is already an island world.</red>");
         minimsg("createWorld.success", "Successfully created a new sky island world: <yellow><world></yellow>");
         msgfmt("argument.buildLimitTooLarge", "Island build limit size cannot exceed the plot size");
+        msgfmt("argument.worldAlreadyExists", "That world already exists");
+        msgfmt("argument.invalidWorldName", "Invalid world name, must only contain lowercase letters, numbers, and/or underscores (_)");
     }
 
 }
