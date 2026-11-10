@@ -1,17 +1,16 @@
 package me.whizvox.skyislands.core;
 
-import me.whizvox.skyislands.SkyIslands;
+import me.whizvox.skyislands.island.IslandGroup;
+import me.whizvox.skyislands.island.IslandGroups;
 import me.whizvox.skyislands.util.DefaultConfiguration;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
+import net.kyori.adventure.key.Key;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-
-import static me.whizvox.skyislands.SkyIslands.warning;
 
 @NotNullByDefault
 public class PluginConfiguration extends DefaultConfiguration {
@@ -21,14 +20,16 @@ public class PluginConfiguration extends DefaultConfiguration {
         KEY_DEFAULT_WORLD = "skyislands.defaultWorld",
         KEY_DEFAULT_MAX_ISLANDS = "skyislands.defaultMaxIslands";
 
-    private @Nullable World defaultWorld;
     private int saveInterval;
     private int defaultMaxIslands;
+    private @Nullable Key defaultWorld;
+    private final IslandGroups groups;
 
     public PluginConfiguration() {
-        defaultWorld = null;
         saveInterval = 10;
         defaultMaxIslands = 1_000_000;
+        defaultWorld = null;
+        groups = new IslandGroups();
     }
 
     public int getSaveInterval() {
@@ -40,15 +41,6 @@ public class PluginConfiguration extends DefaultConfiguration {
         getConfiguration().set(KEY_SAVE_INTERVAL, saveInterval);
     }
 
-    public Optional<World> getDefaultWorld() {
-        return Optional.ofNullable(defaultWorld);
-    }
-
-    public void setDefaultWorld(World world) {
-        defaultWorld = world;
-        getConfiguration().set(KEY_DEFAULT_WORLD, defaultWorld.getUID().toString());
-    }
-
     public int getDefaultMaxIslands() {
         return defaultMaxIslands;
     }
@@ -56,6 +48,18 @@ public class PluginConfiguration extends DefaultConfiguration {
     public void setDefaultMaxIslands(int max) {
         defaultMaxIslands = Math.clamp(max, 0, Integer.MAX_VALUE);
         getConfiguration().set(KEY_DEFAULT_MAX_ISLANDS, defaultMaxIslands);
+    }
+
+    public Optional<Key> getDefaultWorld() {
+        return Optional.ofNullable(defaultWorld);
+    }
+
+    public void setDefaultWorld(@Nullable Key defaultWorld) {
+        this.defaultWorld = defaultWorld;
+    }
+
+    public IslandGroups getGroups() {
+        return groups;
     }
 
     public void load() {
@@ -67,41 +71,28 @@ public class PluginConfiguration extends DefaultConfiguration {
             config.set(KEY_SAVE_INTERVAL, this.saveInterval);
         }
 
-        String defaultWorldStr = config.getString(KEY_DEFAULT_WORLD);
-        if (defaultWorldStr == null || defaultWorldStr.isEmpty()) {
-            defaultWorld = null;
-        } else {
-            boolean loadByName = true;
-            if (defaultWorldStr.length() == 36) {
-                try {
-                    UUID uid = UUID.fromString(defaultWorldStr);
-                    defaultWorld = Bukkit.getWorld(uid);
-                    if (defaultWorld != null) {
-                        loadByName = false;
-                    } else {
-                        warning("Default sky island world '{0}' was not found", defaultWorldStr);
-                    }
-                } catch (IllegalArgumentException ignored) {
-                }
-            }
-            if (loadByName) {
-                defaultWorld = Bukkit.getWorld(defaultWorldStr);
-                if (defaultWorld == null) {
-                    warning("Default sky island '{0}' was not found", defaultWorldStr);
-                }
-            }
-        }
-        if (defaultWorld != null && !SkyIslands.getInstance().getIslandsManager().isIslandWorld(defaultWorld)) {
-            warning("Default sky island world {0} ({1}) is not actually a sky island world. Resetting to none.",
-                defaultWorld.getName(), defaultWorld.getUID());
-            defaultWorld = null;
-        }
-
         int defaultMaxIslands = config.getInt(KEY_DEFAULT_MAX_ISLANDS);
         this.defaultMaxIslands = Math.clamp(defaultMaxIslands, 0, Integer.MAX_VALUE);
         if (this.defaultMaxIslands != defaultMaxIslands) {
             config.set(KEY_DEFAULT_MAX_ISLANDS, this.defaultMaxIslands);
         }
+
+        String defaultWorldStr = config.getString(KEY_DEFAULT_WORLD);
+        if (defaultWorldStr != null && defaultWorldStr.isEmpty()) {
+            Key key = NamespacedKey.fromString(defaultWorldStr);
+            if (key != null) {
+                defaultWorld = key;
+            } else {
+                config.set(KEY_DEFAULT_WORLD, "");
+                defaultWorld = null;
+            }
+        } else {
+            defaultWorld = null;
+        }
+
+        //noinspection unchecked
+        List<IslandGroup> groups = (List<IslandGroup>) config.getList("groups", List.of());
+        this.groups.reload(groups);
     }
 
     @Override
@@ -111,15 +102,20 @@ public class PluginConfiguration extends DefaultConfiguration {
             "Range: [0, 360]",
             "Default: 10"
         );
-        set(KEY_DEFAULT_WORLD, "",
-            "Name or UUID of default sky island world. Set to an empty string ('') to set no default.",
-            "Default: ''"
-        );
         set(KEY_DEFAULT_MAX_ISLANDS, 1_000_000,
             "Default maximum of islands for a sky island world. A value of 0 is a special case, which means there is no default maximum.",
             "Range: [0, 2147483647]",
             "Default: 1000000"
         );
+        set(KEY_DEFAULT_WORLD, "",
+            "Default sky island world. Set to an empty string for none.",
+            "Default: ''"
+        );
+        set("skyislands.group.default.displayName", "default");
+        set("skyislands.group.default.maxIslands", 1);
+        set("skyislands.group.default.maxMembers", 5);
+        set("skyislands.group.default.maxVisitors", 16);
+        setComments("skyislands.group", "A list of all groups that are present within the sky islands system. This is meant to only be modified via in-game commands.");
     }
 
 }

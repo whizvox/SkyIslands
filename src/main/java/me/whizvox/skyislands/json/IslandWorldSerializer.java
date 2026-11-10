@@ -7,6 +7,7 @@ import me.whizvox.skyislands.island.Island;
 import me.whizvox.skyislands.island.IslandWorld;
 import me.whizvox.skyislands.island.IslandWorldProperties;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.lang.reflect.Type;
@@ -26,8 +27,9 @@ public class IslandWorldSerializer implements JsonSerializer<IslandWorld>, JsonD
             Island island = context.deserialize(islandObj.get("island"), Island.class);
             islands.put(id, island);
         });
+        Location lobby = context.deserialize(root.get("location"), Location.class);
         int lastAssignedId = root.get("lastAssignedId").getAsInt();
-        return new IslandWorld(world, properties, islands, lastAssignedId);
+        return new IslandWorld(world, properties, islands, lobby, lastAssignedId);
     }
 
     @Override
@@ -43,6 +45,7 @@ public class IslandWorldSerializer implements JsonSerializer<IslandWorld>, JsonD
             islandsArr.add(islandJson);
         });
         root.add("islands", islandsArr);
+        root.add("lobby", context.serialize(src.getLobby()));
         root.addProperty("lastAssignedId", src.getLastAssignedId());
         return root;
     }

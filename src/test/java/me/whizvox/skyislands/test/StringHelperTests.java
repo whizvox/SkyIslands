@@ -10,6 +10,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class StringHelperTests {
 
     @Test
+    void snakeCaseToLowerCamelCase() {
+        assertEquals("helloWorld", StringHelper.snakeCaseToLowerCamelCase("HELLO_WORLD"));
+        assertEquals("helloWorld123", StringHelper.snakeCaseToLowerCamelCase("HELLO_WORLD_123"));
+        assertEquals("aReallySuperLongStringWithLotsOfCharacters", StringHelper.snakeCaseToLowerCamelCase("A_REALLY_SUPER_LONG_STRING_WITH_LOTS_OF_CHARACTERS"));
+    }
+
+    @Test
     void wordWrap() {
         assertEquals(List.of("Lorem ipsum"), StringHelper.wordWrap("Lorem ipsum", 80));
         assertEquals(List.of("Lorem", "ipsum"), StringHelper.wordWrap("Lorem ipsum", 8));

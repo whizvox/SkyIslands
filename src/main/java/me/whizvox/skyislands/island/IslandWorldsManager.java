@@ -2,6 +2,7 @@ package me.whizvox.skyislands.island;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.whizvox.skyislands.SkyIslands;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -12,9 +13,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static me.whizvox.skyislands.SkyIslands.info;
 import static me.whizvox.skyislands.SkyIslands.warning;
@@ -42,6 +41,12 @@ public class IslandWorldsManager {
         return Optional.ofNullable(defaultWorld);
     }
 
+    public List<IslandInfo> getIslandsByOwner(UUID ownerId) {
+        List<IslandInfo> islands = new ArrayList<>();
+        worlds.values().forEach(world -> islands.addAll(world.getIslandsByOwner(ownerId)));
+        return islands;
+    }
+
     public boolean setDefaultWorld(World world) {
         UUID id = world.getUID();
         if (isIslandWorld(world)) {
@@ -52,9 +57,9 @@ public class IslandWorldsManager {
         return false;
     }
 
-    public Optional<IslandWorld> createWorld(World world, IslandWorldProperties properties) {
+    public Optional<IslandWorld> createWorld(World world, Location lobby, IslandWorldProperties properties) {
         if (!isIslandWorld(world)) {
-            IslandWorld islandWorld = new IslandWorld(world, properties);
+            IslandWorld islandWorld = new IslandWorld(world, lobby, properties);
             worlds.put(world.getUID(), islandWorld);
             return Optional.of(islandWorld);
         }

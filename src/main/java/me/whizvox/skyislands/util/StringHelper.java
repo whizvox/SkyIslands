@@ -5,6 +5,25 @@ import java.util.List;
 
 public class StringHelper {
 
+    public static String snakeCaseToLowerCamelCase(String str) {
+        StringBuilder sb = new StringBuilder();
+        boolean uppercaseNext = false;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == '_') {
+                uppercaseNext = true;
+            } else {
+                if (uppercaseNext) {
+                    sb.append(Character.toUpperCase(c));
+                    uppercaseNext = false;
+                } else {
+                    sb.append(Character.toLowerCase(c));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
     public static List<String> wordWrap(String line, int length) {
         if (line.length() <= length) {
             return List.of(line);

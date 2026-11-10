@@ -12,8 +12,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.joml.Vector2i;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public final class IslandWorld {
@@ -22,17 +21,22 @@ public final class IslandWorld {
     private final IslandWorldProperties properties;
     private final Int2ObjectMap<IslandInfo> islandsIdMap;
     private final Object2ObjectMap<Vector2i, IslandInfo> islandsPositionMap;
+    private final Object2ObjectMap<UUID, List<IslandInfo>> islandsOwnersMap;
+    private Location lobby;
     private int lastAssignedId;
 
     public IslandWorld(World world,
                        IslandWorldProperties properties,
                        Map<Integer, Island> islands,
+                       Location lobby,
                        int lastAssignedId) {
         this.world = world;
         this.properties = properties;
+        this.lobby = lobby;
         this.lastAssignedId = lastAssignedId;
         islandsIdMap = new Int2ObjectOpenHashMap<>();
         islandsPositionMap = new Object2ObjectOpenHashMap<>();
+        islandsOwnersMap = new Object2ObjectOpenHashMap<>();
         islands.forEach((id, island) -> {
             Vector2i pos = getIslandPosition(id);
             var areas = getPlotAndBuildAreas(pos);
@@ -42,8 +46,8 @@ public final class IslandWorld {
         });
     }
 
-    public IslandWorld(World world, IslandWorldProperties properties) {
-        this(world, properties, Map.of(), 0);
+    public IslandWorld(World world, Location lobby, IslandWorldProperties properties) {
+        this(world, properties, Map.of(), lobby, 0);
     }
 
     public World getWorld() {
@@ -56,6 +60,10 @@ public final class IslandWorld {
 
     public Stream<IslandInfo> getIslands() {
         return islandsIdMap.values().stream();
+    }
+
+    public Location getLobby() {
+        return lobby.clone();
     }
 
     public int getLastAssignedId() {
@@ -109,6 +117,18 @@ public final class IslandWorld {
         return Optional.empty();
     }
 
+    public List<IslandInfo> getIslandsByOwner(UUID playerId) {
+        return islandsOwnersMap.getOrDefault(playerId, List.of());
+    }
+
+    public boolean setLobby(Location lobby) {
+        if (!lobby.getWorld().getUID().equals(world.getUID())) {
+            this.lobby = lobby;
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Creates a new island with a specified owner.
      * <br>
@@ -136,6 +156,7 @@ public final class IslandWorld {
         IslandInfo info = new IslandInfo(id, island, areas.first(), areas.second());
         islandsIdMap.put(id, info);
         islandsPositionMap.put(position, info);
+        islandsOwnersMap.computeIfAbsent(owner.getUniqueId(), i -> new ArrayList<>()).add(info);
         lastAssignedId = id;
         return Optional.of(info);
     }
