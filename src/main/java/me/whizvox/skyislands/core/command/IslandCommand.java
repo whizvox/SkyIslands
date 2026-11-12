@@ -11,7 +11,9 @@ import io.papermc.paper.command.brigadier.argument.resolvers.FinePositionResolve
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import me.whizvox.skyislands.SkyIslands;
 import me.whizvox.skyislands.command.argument.IslandPermissionArgumentType;
+import me.whizvox.skyislands.command.argument.IslandWorldArgumentType;
 import me.whizvox.skyislands.island.IncompleteIslandWorld;
+import me.whizvox.skyislands.island.IslandInfo;
 import me.whizvox.skyislands.island.IslandWorld;
 import me.whizvox.skyislands.island.IslandWorldProperties;
 import me.whizvox.skyislands.util.ComponentHelper;
@@ -27,10 +29,9 @@ import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.generator.WorldInfo;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -162,14 +163,45 @@ public class IslandCommand {
     return SINGLE_SUCCESS;
   }
 
-  public static int createIsland(CommandSender sender, Player owner) throws CommandSyntaxException {
-    /*int maxIslands = SkyIslands.getInstance().getPluginConfig().getGroups().getMaxIslands(owner);
+  public static int createIsland(CommandSender sender, Player owner, @Nullable IslandWorld world) throws CommandSyntaxException {
+    if (world == null) {
+      world = SkyIslands.getInstance().getIslandsWorldManager().getDefaultWorld()
+          .orElseThrow(() -> {
+            if (SkyIslands.getInstance().getIslandsWorldManager().getWorlds().findAny().isPresent()) {
+              return cmdex("create.noDefaultWorld");
+            }
+            return cmdex("create.noWorlds");
+          });
+    }
+    int maxIslands = SkyIslands.getInstance().getPluginConfig().getGroups().getMaxIslands(owner);
     if (maxIslands == 0) {
       throw cmdex("create.noIslandsAllowed");
     }
-    if (maxIslands <= SkyIslands.getInstance().getIslandsManager().getIslandsByOwner(owner.getUniqueId()).size()) {
-      throw cmdex("create.maxIslandsReached", Map.of("value", maxIslands));
-    }*/
+    List<IslandInfo> ownedIslands = getInstance().getIslandsWorldManager().getIslands(owner.getUniqueId()).toList();
+    if (ownedIslands.size() >= maxIslands) {
+      throw cmdex("create.maxPlayerIslands", Map.of("value", maxIslands));
+    }
+    int nextSlot = 1;
+    if (!ownedIslands.isEmpty()) {
+      boolean keepSearching = true;
+      searchLoop:
+      while (keepSearching) {
+        for (IslandInfo info : ownedIslands) {
+          if (info.island().getOwnerKey().slot() == nextSlot) {
+            nextSlot++;
+            continue searchLoop;
+          }
+        }
+        keepSearching = false;
+      }
+    }
+    world.createIsland(owner, nextSlot).ifPresentOrElse(_ -> {
+      if (sender != owner) {
+        sender.sendMessage(tl("create.success.self"));
+      } else {
+        sender.sendMessage(tl("create.success.other"));
+      }
+    }, () -> sender.sendMessage(tl("create.maxWorldIslands")));
     return SINGLE_SUCCESS;
   }
 
@@ -269,15 +301,28 @@ public class IslandCommand {
                 .executes(context -> setupWorld(context.getSource().getSender()))
             )
             .then(Commands.literal("create")
-                .then(Commands.argument("other", ArgumentTypes.player())
-                    .requires(source -> hasPermission(source, PERMISSION_CREATE_OTHERS))
+                .then(Commands.argument("world", IslandWorldArgumentType.islandWorld())
+                    .then(Commands.argument("other", ArgumentTypes.player())
+                        .requires(source -> hasPermission(source, PERMISSION_CREATE_OTHERS))
+                        .executes(context -> createIsland(
+                            context.getSource().getSender(),
+                            context.getArgument("other", PlayerSelectorArgumentResolver.class).resolve(context.getSource()).getFirst(),
+                            IslandWorldArgumentType.getIslandWorld(context, "world")
+                        ))
+                    )
+                    .requires(source -> hasPermission(source, PERMISSION_CREATE))
                     .executes(context -> createIsland(
                         context.getSource().getSender(),
-                        context.getArgument("other", PlayerSelectorArgumentResolver.class).resolve(context.getSource()).getFirst()
+                        context.getSource().getPlayerOrThrow(),
+                        IslandWorldArgumentType.getIslandWorld(context, "world")
                     ))
                 )
                 .requires(source -> hasPermission(source, PERMISSION_CREATE))
-                .executes(context -> createIsland(context.getSource().getSender(), context.getSource().getPlayerOrThrow()))
+                .executes(context -> createIsland(
+                    context.getSource().getSender(),
+                    context.getSource().getPlayerOrThrow(),
+                    null
+                ))
             )
             .build()
     );

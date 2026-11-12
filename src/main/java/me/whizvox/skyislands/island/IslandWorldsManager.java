@@ -2,109 +2,249 @@ package me.whizvox.skyislands.island;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.whizvox.skyislands.SkyIslands;
-import org.bukkit.Location;
-import org.bukkit.World;
+import me.whizvox.skyislands.core.PluginConfiguration;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
-import static me.whizvox.skyislands.SkyIslands.info;
-import static me.whizvox.skyislands.SkyIslands.warning;
+import static me.whizvox.skyislands.SkyIslands.*;
 
 @NotNullByDefault
 public class IslandWorldsManager {
 
-    private final Map<UUID, IslandWorld> worlds;
-    private @Nullable UUID defaultWorldKey;
-    private @Nullable IslandWorld defaultWorld;
-    private boolean isSaving;
+  private final Map<Key, IslandWorld> worlds;
+  private final Map<Island.OwnerKey, IslandInfo> ownerIslandsCache;
+  private @Nullable IslandWorld defaultWorld;
+  private @Nullable Key defaultWorldKey;
+  private @Nullable IncompleteIslandWorld incompleteWorld;
+  private boolean saving;
 
-    public IslandWorldsManager() {
-        worlds = new Object2ObjectOpenHashMap<>();
-        defaultWorldKey = null;
-        defaultWorld = null;
-        isSaving = false;
-    }
+  public IslandWorldsManager() {
+    worlds = new Object2ObjectOpenHashMap<>();
+    ownerIslandsCache = new Object2ObjectOpenHashMap<>();
+    defaultWorld = null;
+    defaultWorldKey = null;
+    incompleteWorld = null;
+    saving = false;
+  }
 
-    public boolean isIslandWorld(World world) {
-        return worlds.containsKey(world.getUID());
-    }
+  public Optional<IslandWorld> getDefaultWorld() {
+    return Optional.ofNullable(defaultWorld);
+  }
 
-    public Optional<IslandWorld> getDefaultWorld() {
-        return Optional.ofNullable(defaultWorld);
-    }
+  public Optional<Key> getDefaultWorldKey() {
+    return Optional.ofNullable(defaultWorldKey);
+  }
 
-    public List<IslandInfo> getIslandsByOwner(UUID ownerId) {
-        List<IslandInfo> islands = new ArrayList<>();
-        worlds.values().forEach(world -> islands.addAll(world.getIslandsByOwner(ownerId)));
-        return islands;
-    }
+  public Stream<IslandWorld> getWorlds() {
+    return worlds.values().stream();
+  }
 
-    public boolean setDefaultWorld(World world) {
-        UUID id = world.getUID();
-        if (isIslandWorld(world)) {
-            defaultWorldKey = id;
-            defaultWorld = worlds.get(id);
-            return true;
-        }
-        return false;
-    }
-
-    public Optional<IslandWorld> createWorld(World world, Location lobby, IslandWorldProperties properties) {
-        if (!isIslandWorld(world)) {
-            IslandWorld islandWorld = new IslandWorld(world, lobby, properties);
-            worlds.put(world.getUID(), islandWorld);
-            return Optional.of(islandWorld);
-        }
+  public Optional<IslandWorld> getIslandWorld(@Nullable Key key) {
+    if (key == null) {
+      if (defaultWorld == null) {
         return Optional.empty();
+      }
+      return Optional.of(defaultWorld);
     }
+    return Optional.ofNullable(worlds.get(key));
+  }
 
-    public void load(Path worldsDir) {
-        if (Files.isDirectory(worldsDir)) {
-            worlds.clear();
-            try (var list = Files.list(worldsDir)) {
-                list
-                    .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".json"))
-                    .forEach(path -> {
-                        try (Reader reader = new InputStreamReader(Files.newInputStream(path))) {
-                            IslandWorld islandWorld = SkyIslands.getInstance().getGson().fromJson(reader,
-                                IslandWorld.class);
-                            worlds.put(islandWorld.getWorld().getUID(), islandWorld);
-                        } catch (IOException e) {
-                            warning(e, "Could not read island world from `{0}`", path);
-                        }
-                    });
-            } catch (IOException e) {
-                warning(e, "Could not list files from worlds directory `{0}`", worldsDir);
-            }
-            info("Finished loading {0} island world(s)", worlds.size());
-        } else {
-            info("Worlds directory `{0}` does not exist, loaded 0 island worlds", worldsDir);
-        }
+  public Optional<IncompleteIslandWorld> getIncompleteWorld() {
+    return Optional.ofNullable(incompleteWorld);
+  }
+
+  /**
+   * Retrieve a player's island based on their UUID and the slot number of the island.
+   * <br>
+   * <b>Important to note:</b> This uses a cache to look up the correct value. If an island changes ownership or if a
+   * player changes the slot number of one of their islands, you must call {@link #invalidateCache(Island.OwnerKey)}
+   * immediately, or this might return the incorrect value!
+   * @param key The key to look up
+   * @return The {@link IslandInfo} instance corresponding to the specified key
+   */
+  public Optional<IslandInfo> getIsland(Island.OwnerKey key) {
+    IslandInfo res = ownerIslandsCache.get(key);
+    if (res != null) {
+      return Optional.of(res);
     }
+    var op = worlds.values().stream()
+        .map(world -> world.getIsland(key))
+        .filter(Optional::isPresent)
+        .findFirst().orElse(Optional.empty());
+    if (op.isPresent()) {
+      res = op.get();
+      ownerIslandsCache.put(key, res);
+      return Optional.of(res);
+    }
+    return Optional.empty();
+  }
 
-    public boolean save(Path worldsDir) {
-        if (isSaving) {
-            return false;
-        }
-        isSaving = true;
-        worlds.forEach((id, world) -> {
-            Path path = worldsDir.resolve(id + ".json");
-            try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(path))) {
-                SkyIslands.getInstance().getGson().toJson(world, writer);
+  public Optional<IslandInfo> getIsland(Island.WorldKey key) {
+    return getIslandWorld(key.world()).flatMap(world -> world.getIsland(key.id()));
+  }
+
+  public Stream<IslandInfo> getIslands(UUID owner) {
+    return worlds.values().stream().flatMap(world -> world.getIslandsByOwner(owner).stream());
+  }
+
+  public boolean isSaving() {
+    return saving;
+  }
+
+  public boolean setDefaultWorld(Key key) {
+    IslandWorld world = worlds.get(key);
+    if (world != null) {
+      defaultWorld = world;
+      defaultWorldKey = key;
+      return true;
+    }
+    return false;
+  }
+
+  public boolean addWorld(IslandWorld islandWorld) {
+    boolean result = worlds.putIfAbsent(islandWorld.getWorld().key(), islandWorld) == null;
+    if (!result || defaultWorld != null) {
+      return result;
+    }
+    defaultWorld = islandWorld;
+    defaultWorldKey = islandWorld.getWorld().key();
+    return true;
+  }
+
+  public void deleteIslandWorld(Key key, boolean deleteFromDisk, Consumer<Component> messageConsumer) {
+    final IslandWorld world = worlds.get(key);
+    if (world != null) {
+      Bukkit.getAsyncScheduler().runNow(SkyIslands.getInstance(), _ -> {
+        CompletableFuture<?>[] futures = world.getWorld().getPlayers().stream().map(player -> {
+          player.sendMessage(tl("lobby.teleport"));
+          return player.teleportAsync(world.getLobby(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        }).toArray(value -> new CompletableFuture<?>[value]);
+        CompletableFuture.allOf(futures).thenAcceptAsync(_ -> {
+          if (deleteFromDisk) {
+            Path worldPath = world.getWorld().getWorldPath();
+            try (var paths = Files.walk(worldPath)) {
+              List<Path> filesToDelete = paths.sorted(Comparator.reverseOrder()).toList();
+              for (Path path : filesToDelete) {
+                Files.delete(path);
+              }
             } catch (IOException e) {
-                warning(e, "Could not save island world file at `{0}`", path);
+              warning(e, "Could not delete world folder {0}", worldPath);
+              messageConsumer.accept(tl("world.delete.errorDeletingFromDisk", Map.of(
+                  "world", world.getWorld().getKey(),
+                  "error", e.getMessage()
+              )));
             }
+          }
+          messageConsumer.accept(tl("world.delete.success"));
+          worlds.remove(key);
         });
-        isSaving = false;
-        return true;
+      });
     }
+  }
+
+  public boolean setIncompleteWorld(IncompleteIslandWorld incompleteWorld) {
+    if (this.incompleteWorld == null) {
+      this.incompleteWorld = incompleteWorld;
+      return true;
+    }
+    return false;
+  }
+
+  public boolean discardIncompleteWorld() {
+    if (incompleteWorld != null) {
+      incompleteWorld = null;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Use this when an island owner either transfers ownership to another player or if a player puts their island into
+   * another slot. Makes it so {@link #getIsland(Island.OwnerKey)} will return the correct value upon its next call.
+   * @param key The key to invalidate
+   */
+  public void invalidateCache(Island.OwnerKey key) {
+    ownerIslandsCache.remove(key);
+  }
+
+  /**
+   * Use this to delete
+   */
+  public void invalidateCache() {
+
+  }
+
+  public void load(Path worldsDir, PluginConfiguration pluginConfig) {
+    worlds.clear();
+    defaultWorld = null;
+    defaultWorldKey = null;
+    incompleteWorld = null;
+    try (var files = Files.walk(worldsDir, 1)) {
+      files
+          .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".json"))
+          .forEach(path -> {
+            try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(path))) {
+              IslandWorld world = SkyIslands.getInstance().getGson().fromJson(reader, IslandWorld.class);
+              Key key = world.getWorld().key();
+              worlds.put(key, world);
+            } catch (IOException e) {
+              severe(e, "Could not read world file at `{0}`", path);
+            }
+          });
+    } catch (IOException e) {
+      throw new RuntimeException("Could not read from worlds directory: " + worldsDir, e);
+    }
+
+    pluginConfig.getDefaultWorld().ifPresent(key -> {
+      if (!setDefaultWorld(key)) {
+        warning("Default world `{0}` not found!", key);
+      }
+    });
+  }
+
+  public boolean save(Path worldsDir, PluginConfiguration pluginConfig) {
+    if (saving) {
+      return false;
+    }
+    saving = true;
+    synchronized (worlds) {
+      if (!Files.isDirectory(worldsDir)) {
+        try {
+          Files.createDirectories(worldsDir);
+        } catch (IOException e) {
+          severe(e, "Could not save island worlds to directory: {0}", worldsDir);
+          saving = false;
+          return false;
+        }
+      }
+      worlds.values().forEach(world -> {
+        Path worldPath = worldsDir.resolve(world.getWorld().getUID() + ".json");
+        try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(worldPath), StandardCharsets.UTF_8)) {
+          SkyIslands.getInstance().getGson().toJson(world, writer);
+          fine("Finished writing island world file at {0}", worldPath);
+        } catch (IOException e) {
+          severe(e, "Could not save island world {0} at {1}", world.getWorld().key(), worldPath);
+        }
+      });
+    }
+    pluginConfig.setDefaultWorld(defaultWorldKey);
+    saving = false;
+    return true;
+  }
 
 }

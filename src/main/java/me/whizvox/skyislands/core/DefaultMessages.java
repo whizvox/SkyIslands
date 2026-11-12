@@ -25,12 +25,15 @@ public class DefaultMessages {
 
     private void addAll() {
         minimsg("command.version", "<bold>[<gradient:blue:aqua>SkyIslands</gradient>]</bold> Version: <yellow><version></yellow>");
-        minimsg("create.self", "Successfully created your own island! Run <yellow><click:run_command:'/island home'>/island home</click></yellow> to go there.");
+        minimsg("create.self", "Successfully created your own island! Run <green><click:run_command:'/island home'>/island home</click></green> to go there.");
         minimsg("create.other", "Successfully created an island for <aqua><player></aqua>.");
         minimsg("create.worldAlreadyExists", "There already exists a sky island world: <yellow><world></yellow>");
         minimsg("create.worldNameConflict", "There already exists a world with that name");
         minimsg("create.noIslandsAllowed", "You are not allowed to create any sky islands.");
-        minimsg("create.maxIslandsReached", "Maximum number of islands reached: <yellow><value></yellow>");
+        minimsg("create.maxPlayerIslands", "Maximum number of islands reached: <yellow><value></yellow>");
+        minimsg("create.maxWorldIslands", "That world has run out of available islands!");
+        minimsg("create.noDefaultWorld", "You must specify the world you wish to create your island in.");
+        minimsg("create.noWorlds", "Cannot create an island as there are no island worlds.");
         minimsg("setup.success", "A new sky island world has been set up. Run <click:run_command:'/island setup help'><yellow>/island setup help</yellow></click> for more information.");
         minimsg("setup.alreadySettingUp", "A sky island world is already being set up.");
         minimsg("setup.alreadyExists", "A sky island world already exists. You cannot have more than one per server.");
@@ -76,6 +79,7 @@ public class DefaultMessages {
         minimsg("argument.worldAlreadyExists", "That world already exists");
         minimsg("argument.invalidWorldName", "Invalid world name, must only contain lowercase letters, numbers, and/or underscores (_)");
         minimsg("argument.unknownEnumValue", "Unknown value, must be one of the following: <values>");
+        minimsg("argument.skyIslandWorld.invalid", "Not a sky island world: <yellow><value></yellow>");
     }
 
 }

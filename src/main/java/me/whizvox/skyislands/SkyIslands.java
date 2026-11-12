@@ -13,8 +13,8 @@ import me.whizvox.skyislands.i18n.HybridTranslationStore;
 import me.whizvox.skyislands.i18n.Messages;
 import me.whizvox.skyislands.island.Island;
 import me.whizvox.skyislands.island.IslandWorld;
-import me.whizvox.skyislands.island.IslandWorldManager;
 import me.whizvox.skyislands.island.IslandWorldProperties;
+import me.whizvox.skyislands.island.IslandWorldsManager;
 import me.whizvox.skyislands.json.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
@@ -46,7 +46,7 @@ public final class SkyIslands extends JavaPlugin {
   private final Gson gson;
   private final HybridTranslationStore hybridTranslationStore;
   private final PluginConfiguration pluginConfig;
-  private final IslandWorldManager islandsWorldManager;
+  private final IslandWorldsManager islandsWorldManager;
   private @Nullable Path langDir, worldsDir;
   private int prevSaveInterval;
   private @Nullable ScheduledTask saveTask;
@@ -66,7 +66,7 @@ public final class SkyIslands extends JavaPlugin {
         .create();
     hybridTranslationStore = new HybridTranslationStore("skyislands", Locale.ENGLISH, MiniMessage.miniMessage());
     pluginConfig = new PluginConfiguration();
-    islandsWorldManager = new IslandWorldManager();
+    islandsWorldManager = new IslandWorldsManager();
     langDir = null;
     worldsDir = null;
     prevSaveInterval = -1;
@@ -90,7 +90,7 @@ public final class SkyIslands extends JavaPlugin {
     return pluginConfig;
   }
 
-  public IslandWorldManager getIslandsWorldManager() {
+  public IslandWorldsManager getIslandsWorldManager() {
     return islandsWorldManager;
   }
 

@@ -1,90 +1,95 @@
 package me.whizvox.skyislands.island;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import net.kyori.adventure.key.Key;
 import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+@NotNullByDefault
 public final class Island {
 
-    private final Set<IslandPermission> visitorPermissions;
-    private final Set<OfflinePlayer> members;
-    private final Set<OfflinePlayer> coOwners;
-    private final LocalDateTime created;
-    private OfflinePlayer owner;
+  private OwnerKey ownerKey;
+  public final WorldKey worldKey;
+  private final Set<IslandPermission> visitorPermissions;
+  private final Set<UUID> members;
+  private final Set<UUID> coOwners;
+  public final LocalDateTime created;
 
-    public Island(OfflinePlayer owner, Collection<IslandPermission> visitorPermissions,
-                  Collection<OfflinePlayer> members, Collection<OfflinePlayer> coOwners, LocalDateTime created) {
-        this.owner = owner;
-        this.visitorPermissions = new ObjectArraySet<>(visitorPermissions);
-        this.members = new ObjectArraySet<>(members);
-        this.coOwners = new ObjectArraySet<>(coOwners);
-        this.created = created;
-    }
+  public Island(OwnerKey ownerKey, WorldKey worldKey, Collection<IslandPermission> visitorPermissions, Collection<UUID> members, Collection<UUID> coOwners, LocalDateTime created) {
+    this.ownerKey = ownerKey;
+    this.worldKey = worldKey;
+    this.visitorPermissions = new ObjectArraySet<>(visitorPermissions);
+    this.members = new ObjectArraySet<>(members);
+    this.coOwners = new ObjectArraySet<>(coOwners);
+    this.created = created;
+  }
 
-    public Island(OfflinePlayer owner) {
-        this(owner, List.of(), List.of(), List.of(), LocalDateTime.now(ZoneOffset.UTC));
-    }
+  public Island(OwnerKey ownerKey, WorldKey worldKey) {
+    this(ownerKey, worldKey, List.of(), List.of(), List.of(), LocalDateTime.now(ZoneOffset.UTC));
+  }
 
-    public OfflinePlayer getOwner() {
-        return owner;
-    }
+  public OwnerKey getOwnerKey() {
+    return ownerKey;
+  }
 
-    public void setOwner(OfflinePlayer owner) {
-        this.owner = owner;
-    }
+  public void setOwnerKey(OwnerKey ownerKey) {
+    this.ownerKey = ownerKey;
+  }
 
-    public Set<IslandPermission> getVisitorPermissions() {
-        return Collections.unmodifiableSet(visitorPermissions);
-    }
+  public Set<IslandPermission> getVisitorPermissions() {
+    return Collections.unmodifiableSet(visitorPermissions);
+  }
 
-    public Set<OfflinePlayer> getMembers() {
-        return Collections.unmodifiableSet(members);
-    }
+  public Set<UUID> getMembers() {
+    return Collections.unmodifiableSet(members);
+  }
 
-    public Set<OfflinePlayer> getCoOwners() {
-        return Collections.unmodifiableSet(coOwners);
-    }
+  public Set<UUID> getCoOwners() {
+    return Collections.unmodifiableSet(coOwners);
+  }
 
-    public LocalDateTime getCreated() {
-        return created;
+  public void toggleVisitorPermission(IslandPermission permission) {
+    if (!visitorPermissions.remove(permission)) {
+      visitorPermissions.add(permission);
     }
+  }
 
-    public void toggleVisitorPermission(IslandPermission permission) {
-        if (!visitorPermissions.remove(permission)) {
-            visitorPermissions.add(permission);
-        }
-    }
+  public void addMember(OfflinePlayer player) {
+    members.add(player.getUniqueId());
+  }
 
-    public void addMember(OfflinePlayer player) {
-        members.add(player);
-    }
+  public void removeMember(OfflinePlayer player) {
+    members.remove(player.getUniqueId());
+  }
 
-    public void removeMember(OfflinePlayer player) {
-        members.remove(player);
+  public boolean promoteToCoOwner(OfflinePlayer player) {
+    UUID id = player.getUniqueId();
+    if (members.contains(id)) {
+      coOwners.add(id);
+      members.remove(id);
+      return true;
     }
+    return false;
+  }
 
-    public boolean promoteToCoOwner(OfflinePlayer player) {
-        if (members.contains(player)) {
-            coOwners.add(player);
-            members.remove(player);
-            return true;
-        }
-        return false;
+  public boolean demoteToMember(OfflinePlayer player) {
+    UUID id = player.getUniqueId();
+    if (coOwners.contains(id)) {
+      coOwners.remove(id);
+      members.add(id);
+      return true;
     }
+    return false;
+  }
 
-    public boolean demoteToMember(OfflinePlayer player) {
-        if (coOwners.contains(player)) {
-            coOwners.remove(player);
-            members.add(player);
-            return true;
-        }
-        return false;
-    }
+  public record OwnerKey(UUID player, int slot) {
+  }
+
+  public record WorldKey(Key world, int id) {
+  }
 
 }
