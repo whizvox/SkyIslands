@@ -183,10 +183,10 @@ public class IslandWorldsManager {
   }
 
   /**
-   * Use this to delete
+   * Deletes all cache data.
    */
   public void invalidateCache() {
-
+    ownerIslandsCache.clear();
   }
 
   public void load(Path worldsDir, PluginConfiguration pluginConfig) {

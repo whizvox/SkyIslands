@@ -8,7 +8,7 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import me.whizvox.skyislands.command.util.TranslatableCommandExceptionType;
 import me.whizvox.skyislands.core.DefaultMessages;
 import me.whizvox.skyislands.core.PluginConfiguration;
-import me.whizvox.skyislands.core.command.IslandCommand;
+import me.whizvox.skyislands.core.command.island.IslandCommand;
 import me.whizvox.skyislands.i18n.HybridTranslationStore;
 import me.whizvox.skyislands.i18n.Messages;
 import me.whizvox.skyislands.island.Island;
@@ -151,7 +151,9 @@ public final class SkyIslands extends JavaPlugin {
     hybridTranslationStore.registerGlobal();
 
     getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-      IslandCommand.register(event.registrar());
+      var islandCommand = new IslandCommand("island");
+      islandCommand.addAllSubCommands();
+      islandCommand.register(event.registrar());
     });
 
     // register skyblock island structure
