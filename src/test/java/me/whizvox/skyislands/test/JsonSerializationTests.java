@@ -2,10 +2,8 @@ package me.whizvox.skyislands.test;
 
 import com.google.gson.Gson;
 import me.whizvox.skyislands.SkyIslands;
-import me.whizvox.skyislands.island.Island;
-import me.whizvox.skyislands.island.IslandPermission;
-import me.whizvox.skyislands.island.IslandWorld;
-import me.whizvox.skyislands.island.IslandWorldProperties;
+import me.whizvox.skyislands.core.PluginConfiguration;
+import me.whizvox.skyislands.island.*;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -89,6 +87,32 @@ public class JsonSerializationTests {
     IslandWorld o2 = new IslandWorld(world, new IslandWorldProperties(100, 1000, 1_000_001, List.of(IslandPermission.BUILD, IslandPermission.HURT_FRIENDLY_ENTITIES, IslandPermission.INTERACT_CONTAINERS)), List.of(i1, i2), new Location(world, 50, 40, 11), 2);
     assertEquals(o1, GSON.fromJson(GSON.toJson(o1), IslandWorld.class));
     assertEquals(o2, GSON.fromJson(GSON.toJson(o2), IslandWorld.class));
+  }
+
+  @Test
+  void json_islandGroup() {
+    IslandGroup o1 = new IslandGroup("default");
+    IslandGroup o2 = new IslandGroup("admin", "<red>Admin</red>", 1000, 500, 10000);
+    assertEquals(o1, GSON.fromJson(GSON.toJson(o1), IslandGroup.class));
+    assertEquals(o2, GSON.fromJson(GSON.toJson(o2), IslandGroup.class));
+  }
+
+  @Test
+  void json_pluginConfiguration() {
+    IslandGroup g1 = new IslandGroup("default");
+    IslandGroup g2 = new IslandGroup("admin", "<red>Admin</red>", 1000, 500, 10000);
+    IslandGroup g3 = new IslandGroup("donator", "<yellow>Donator</yellow>", 10, 20, 50);
+    IslandGroups s1 = new IslandGroups();
+    s1.addGroup(g1);
+    s1.addGroup(g2);
+    IslandGroups s2 = new IslandGroups();
+    s2.addGroup(g1);
+    s2.addGroup(g2);
+    s2.addGroup(g3);
+    PluginConfiguration o1 = new PluginConfiguration(s1, null, 1_000_000, 10);
+    PluginConfiguration o2 = new PluginConfiguration(s2, NamespacedKey.fromString("skyislands:skyblock"), 50_000, 5);
+    assertEquals(o1, GSON.fromJson(GSON.toJson(o1), PluginConfiguration.class));
+    assertEquals(o2, GSON.fromJson(GSON.toJson(o2), PluginConfiguration.class));
   }
 
 }

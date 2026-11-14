@@ -11,10 +11,7 @@ import me.whizvox.skyislands.core.PluginConfiguration;
 import me.whizvox.skyislands.core.command.island.IslandCommand;
 import me.whizvox.skyislands.i18n.HybridTranslationStore;
 import me.whizvox.skyislands.i18n.Messages;
-import me.whizvox.skyislands.island.Island;
-import me.whizvox.skyislands.island.IslandWorld;
-import me.whizvox.skyislands.island.IslandWorldProperties;
-import me.whizvox.skyislands.island.IslandWorldsManager;
+import me.whizvox.skyislands.island.*;
 import me.whizvox.skyislands.json.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
@@ -32,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,7 +45,7 @@ public final class SkyIslands extends JavaPlugin {
   private final HybridTranslationStore hybridTranslationStore;
   private final PluginConfiguration pluginConfig;
   private final IslandWorldsManager islandsWorldManager;
-  private @Nullable Path langDir, worldsDir;
+  private @Nullable Path configFile, langDir, worldsDir;
   private int prevSaveInterval;
   private @Nullable ScheduledTask saveTask;
 
@@ -59,6 +57,7 @@ public final class SkyIslands extends JavaPlugin {
     hybridTranslationStore = new HybridTranslationStore("skyislands", Locale.ENGLISH, MiniMessage.miniMessage());
     pluginConfig = new PluginConfiguration();
     islandsWorldManager = new IslandWorldsManager();
+    configFile = null;
     langDir = null;
     worldsDir = null;
     prevSaveInterval = -1;
@@ -88,11 +87,8 @@ public final class SkyIslands extends JavaPlugin {
 
   public void reload() {
     // configuration file
-    reloadConfig(); // reload configuration file
-    pluginConfig.setup(getConfig()); // re-initialize to use the reloaded configuration file
-    pluginConfig.generateDefaults(); // generate default values using the reloaded configuration file
-    pluginConfig.load(); // reload the plugin-specific configuration values
-    pluginConfig.save(getDataPath().resolve("config.yml")); // save in case any invalid values were corrected
+    pluginConfig.load(Objects.requireNonNull(configFile));
+    pluginConfig.save(configFile);
 
     // sky island world file
     if (worldsDir != null && Files.isRegularFile(worldsDir)) {
@@ -137,6 +133,7 @@ public final class SkyIslands extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    configFile = getDataPath().resolve("config.json");
     langDir = getDataPath().resolve("lang");
     worldsDir = getDataPath().resolve("worlds");
     reload();
@@ -178,6 +175,9 @@ public final class SkyIslands extends JavaPlugin {
         .disableHtmlEscaping()
         .registerTypeAdapter(Location.class, new LocationSerializer())
         .registerTypeAdapter(Messages.class, new MessagesSerializer())
+        .registerTypeAdapter(PluginConfiguration.class, new PluginConfigurationSerializer())
+        .registerTypeAdapter(IslandGroup.class, new IslandGroupSerializer())
+        .registerTypeAdapter(IslandGroups.class, new IslandGroupsSerializer())
         .registerTypeAdapter(Island.class, new IslandSerializer())
         .registerTypeAdapter(IslandWorldProperties.class, new IslandWorldPropertiesSerializer())
         .registerTypeAdapter(IslandWorld.class, new IslandWorldSerializer());
@@ -260,6 +260,22 @@ public final class SkyIslands extends JavaPlugin {
 
   public static @Nullable NamespacedKey key(String name) {
     return NamespacedKey.fromString(name, instance);
+  }
+
+  public static <T> T readJson(Path filePath, Class<T> cls) throws IOException {
+    try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(filePath))) {
+      return instance.gson.fromJson(reader, cls);
+    }
+  }
+
+  public static <T> void writeJson(Path filePath, T obj, Class<? extends T> cls) throws IOException {
+    try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(filePath))) {
+      instance.gson.toJson(obj, cls, writer);
+    }
+  }
+
+  public static <T> void writeJson(Path filePath, T obj) throws IOException {
+    writeJson(filePath, obj, obj.getClass());
   }
 
 }
