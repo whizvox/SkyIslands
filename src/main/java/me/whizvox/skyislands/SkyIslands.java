@@ -8,6 +8,7 @@ import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import me.whizvox.skyislands.command.util.TranslatableCommandExceptionType;
 import me.whizvox.skyislands.core.DefaultMessages;
 import me.whizvox.skyislands.core.PluginConfiguration;
+import me.whizvox.skyislands.core.command.admin.AdminCommand;
 import me.whizvox.skyislands.core.command.island.IslandCommand;
 import me.whizvox.skyislands.i18n.HybridTranslationStore;
 import me.whizvox.skyislands.i18n.Messages;
@@ -70,7 +71,7 @@ public final class SkyIslands extends JavaPlugin {
         severe("Island worlds are still somehow saving. Did something crash?");
       }
     }
-    pluginConfig.save(getDataPath().resolve("config.yml"));
+    pluginConfig.save(getDataPath().resolve("config.json"));
   }
 
   public Gson getGson() {
@@ -86,8 +87,18 @@ public final class SkyIslands extends JavaPlugin {
   }
 
   public void reload() {
+    if (!Files.isDirectory(getDataPath())) {
+      try {
+        Files.createDirectories(getDataPath());
+      } catch (IOException e) {
+        throw new RuntimeException("Could not create plugin data directory", e);
+      }
+    }
+
     // configuration file
-    pluginConfig.load(Objects.requireNonNull(configFile));
+    if (Files.isRegularFile(Objects.requireNonNull(configFile, "Plugin is not initialized"))) {
+      pluginConfig.load(configFile);
+    }
     pluginConfig.save(configFile);
 
     // sky island world file
@@ -143,6 +154,9 @@ public final class SkyIslands extends JavaPlugin {
       var islandCommand = new IslandCommand("island");
       islandCommand.addAllSubCommands();
       islandCommand.register(event.registrar());
+      var adminCommand = new AdminCommand("islandadmin");
+      adminCommand.addAllSubCommands();
+      adminCommand.register(event.registrar());
     });
 
     // register skyblock island structure

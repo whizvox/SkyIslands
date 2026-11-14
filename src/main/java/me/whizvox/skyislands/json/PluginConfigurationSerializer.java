@@ -15,12 +15,12 @@ public class PluginConfigurationSerializer implements JsonSerializer<PluginConfi
   @Override
   public PluginConfiguration deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
     JsonObject src = json.getAsJsonObject();
-    var defaultWorldJson = src.get("defaultWorld");
+    String defaultWorldStr = src.get("defaultWorld").getAsString();
     Key defaultWorld;
-    if (defaultWorldJson == null || defaultWorldJson.isJsonNull()) {
+    if (defaultWorldStr.isEmpty()) {
       defaultWorld = null;
     } else {
-      defaultWorld = NamespacedKey.fromString(defaultWorldJson.getAsString());
+      defaultWorld = NamespacedKey.fromString(defaultWorldStr);
     }
     return new PluginConfiguration(
         context.deserialize(src.get("groups"), IslandGroups.class),
@@ -33,10 +33,7 @@ public class PluginConfigurationSerializer implements JsonSerializer<PluginConfi
   @Override
   public JsonElement serialize(PluginConfiguration src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject root = new JsonObject();
-    src.getDefaultWorld().ifPresentOrElse(
-        key -> root.addProperty("defaultWorld", key.asString()),
-        () -> root.add("defaultWorld", JsonNull.INSTANCE)
-    );
+    root.addProperty("defaultWorld", src.getDefaultWorld().map(Key::asString).orElse(""));
     root.addProperty("saveInterval", src.getSaveInterval());
     root.addProperty("defaultMaxIslands", src.getDefaultMaxIslands());
     root.add("groups", context.serialize(src.getGroups()));

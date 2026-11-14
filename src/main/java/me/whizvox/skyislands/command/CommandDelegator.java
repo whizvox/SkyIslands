@@ -5,7 +5,7 @@ import io.papermc.paper.command.brigadier.Commands;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommandDelegator {
+public abstract class CommandDelegator {
 
   public final String name;
   private final List<SubCommand> subCommands;
@@ -15,9 +15,11 @@ public class CommandDelegator {
     subCommands = new ArrayList<>();
   }
 
-  public void add(SubCommand command) {
+  protected void add(SubCommand command) {
     subCommands.add(command);
   }
+
+  public abstract void addAllSubCommands();
 
   public void register(Commands commands) {
     var mainCommand = Commands.literal(name);
