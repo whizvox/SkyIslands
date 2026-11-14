@@ -182,4 +182,34 @@ public final class IslandWorld {
     return false;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    IslandWorld that = (IslandWorld) o;
+    return lastAssignedId == that.lastAssignedId &&
+        world.key().equals(that.world.key()) &&
+        properties.equals(that.properties) &&
+        islandsIdMap.values().stream().allMatch(info -> Objects.equals(info, that.islandsIdMap.get(info.island().worldKey.id()))) &&
+        lobby.equals(that.lobby);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(world, properties, islandsIdMap, islandsPositionMap, islandsOwnersMap, islandsOwnerKeysMap, lobby, lastAssignedId);
+  }
+
+  @Override
+  public String toString() {
+    return "IslandWorld{" +
+        "world=" + world.key() +
+        ", properties=" + properties +
+        ", islandsIdMap=" + islandsIdMap +
+        ", islandsPositionMap=" + islandsPositionMap +
+        ", islandsOwnersMap=" + islandsOwnersMap +
+        ", islandsOwnerKeysMap=" + islandsOwnerKeysMap +
+        ", lobby=" + lobby +
+        ", lastAssignedId=" + lastAssignedId +
+        '}';
+  }
+
 }

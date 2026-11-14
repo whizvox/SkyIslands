@@ -55,15 +55,7 @@ public final class SkyIslands extends JavaPlugin {
     //noinspection ConstantValue
     assert instance == null : "SkyIslands plugin instance has already been defined";
     instance = this;
-    gson = new GsonBuilder()
-        .setPrettyPrinting()
-        .disableHtmlEscaping()
-        .registerTypeAdapter(Location.class, new LocationSerializer())
-        .registerTypeAdapter(Messages.class, new MessagesSerializer())
-        .registerTypeAdapter(Island.class, new IslandSerializer())
-        .registerTypeAdapter(IslandWorldProperties.class, new IslandWorldPropertiesSerializer())
-        .registerTypeAdapter(IslandWorld.class, new IslandWorldSerializer())
-        .create();
+    gson = createGson(true);
     hybridTranslationStore = new HybridTranslationStore("skyislands", Locale.ENGLISH, MiniMessage.miniMessage());
     pluginConfig = new PluginConfiguration();
     islandsWorldManager = new IslandWorldsManager();
@@ -179,6 +171,20 @@ public final class SkyIslands extends JavaPlugin {
       saveTask.cancel();
       saveTask = null;
     }
+  }
+
+  public static Gson createGson(boolean enablePrettyPrinting) {
+    var builder = new GsonBuilder()
+        .disableHtmlEscaping()
+        .registerTypeAdapter(Location.class, new LocationSerializer())
+        .registerTypeAdapter(Messages.class, new MessagesSerializer())
+        .registerTypeAdapter(Island.class, new IslandSerializer())
+        .registerTypeAdapter(IslandWorldProperties.class, new IslandWorldPropertiesSerializer())
+        .registerTypeAdapter(IslandWorld.class, new IslandWorldSerializer());
+    if (enablePrettyPrinting) {
+      builder.setPrettyPrinting();
+    }
+    return builder.create();
   }
 
   @SuppressWarnings("DataFlowIssue")

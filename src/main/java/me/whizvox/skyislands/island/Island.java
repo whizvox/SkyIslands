@@ -4,9 +4,11 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import net.kyori.adventure.key.Key;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @NotNullByDefault
@@ -84,6 +86,35 @@ public final class Island {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public boolean equals(@Nullable Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    Island island = (Island) o;
+    return ownerKey.equals(island.ownerKey) &&
+        worldKey.equals(island.worldKey) &&
+        visitorPermissions.equals(island.visitorPermissions) &&
+        members.equals(island.members) &&
+        coOwners.equals(island.coOwners) &&
+        created.truncatedTo(ChronoUnit.SECONDS).equals(island.created.truncatedTo(ChronoUnit.SECONDS));
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(ownerKey, worldKey, visitorPermissions, members, coOwners, created);
+  }
+
+  @Override
+  public String toString() {
+    return "Island{" +
+        "ownerKey=" + ownerKey +
+        ", worldKey=" + worldKey +
+        ", visitorPermissions=" + visitorPermissions +
+        ", members=" + members +
+        ", coOwners=" + coOwners +
+        ", created=" + created +
+        '}';
   }
 
   public record OwnerKey(UUID player, int slot) {

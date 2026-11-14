@@ -29,7 +29,6 @@ public class IslandSerializer implements JsonSerializer<Island>, JsonDeserialize
     String worldKeyStr = root.get("world").getAsString();
     Key worldKey = Objects.requireNonNull(NamespacedKey.fromString(worldKeyStr), "Invalid world key: " + worldKeyStr);
     int worldId = root.get("worldId").getAsInt();
-    OfflinePlayer owner = Bukkit.getOfflinePlayer(UUID.fromString(root.get("owner").getAsString()));
     List<IslandPermission> visitorPermissions = new ArrayList<>();
     root.getAsJsonArray("visitorPermissions").forEach(permJson -> visitorPermissions.add(IslandPermission.valueOf(permJson.getAsString())));
     List<UUID> members = new ArrayList<>();

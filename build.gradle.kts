@@ -13,6 +13,15 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.platform:junit-platform-launcher")
+    testImplementation("net.kyori:adventure-api:5.2.0")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.3:4.120.0")
+    testImplementation("org.slf4j:slf4j-simple:2.0.20")
+}
+
+configurations {
+    testImplementation {
+        extendsFrom(configurations.compileOnly.get())
+    }
 }
 
 java {
