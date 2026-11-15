@@ -14,6 +14,7 @@ import me.whizvox.skyislands.island.IslandWorld;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.Map;
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static me.whizvox.skyislands.SkyIslands.*;
 
+@NotNullByDefault
 public class CreateSubCommand extends SubCommand {
 
   public static final Permission

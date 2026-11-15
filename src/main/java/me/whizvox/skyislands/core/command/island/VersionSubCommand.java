@@ -3,12 +3,14 @@ package me.whizvox.skyislands.core.command.island;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import me.whizvox.skyislands.command.SubCommand;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.Map;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static me.whizvox.skyislands.SkyIslands.*;
 
+@NotNullByDefault
 public class VersionSubCommand extends SubCommand {
 
   public VersionSubCommand() {

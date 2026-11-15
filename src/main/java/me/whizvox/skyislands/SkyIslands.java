@@ -14,6 +14,7 @@ import me.whizvox.skyislands.i18n.HybridTranslationStore;
 import me.whizvox.skyislands.i18n.Messages;
 import me.whizvox.skyislands.island.*;
 import me.whizvox.skyislands.json.*;
+import me.whizvox.skyislands.util.Lazy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TranslatableComponent;
@@ -46,7 +47,7 @@ public final class SkyIslands extends JavaPlugin {
   private final HybridTranslationStore hybridTranslationStore;
   private final PluginConfiguration pluginConfig;
   private final IslandWorldsManager islandsWorldManager;
-  private @Nullable Path configFile, langDir, worldsDir;
+  private final Lazy<Path> configFile, langDir, worldsDir;
   private int prevSaveInterval;
   private @Nullable ScheduledTask saveTask;
 
@@ -58,20 +59,18 @@ public final class SkyIslands extends JavaPlugin {
     hybridTranslationStore = new HybridTranslationStore("skyislands", Locale.ENGLISH, MiniMessage.miniMessage());
     pluginConfig = new PluginConfiguration();
     islandsWorldManager = new IslandWorldsManager();
-    configFile = null;
-    langDir = null;
-    worldsDir = null;
+    configFile = Lazy.of(() -> getDataPath().resolve("config.json"));
+    langDir = Lazy.of(() -> getDataPath().resolve("lang"));
+    worldsDir = Lazy.of(() -> getDataPath().resolve("worlds"));
     prevSaveInterval = -1;
     saveTask = null;
   }
 
   private void doSave() {
-    if (worldsDir != null) {
-      if (!islandsWorldManager.save(worldsDir, pluginConfig)) {
-        severe("Island worlds are still somehow saving. Did something crash?");
-      }
+    if (!islandsWorldManager.save(worldsDir.get(), pluginConfig)) {
+      severe("Island worlds are still somehow saving. Did something crash?");
     }
-    pluginConfig.save(getDataPath().resolve("config.json"));
+    pluginConfig.save(configFile.get());
   }
 
   public Gson getGson() {
@@ -80,6 +79,10 @@ public final class SkyIslands extends JavaPlugin {
 
   public PluginConfiguration getPluginConfig() {
     return pluginConfig;
+  }
+
+  public void savePluginConfig() {
+    pluginConfig.save(configFile.get());
   }
 
   public IslandWorldsManager getIslandsWorldManager() {
@@ -96,23 +99,23 @@ public final class SkyIslands extends JavaPlugin {
     }
 
     // configuration file
-    if (Files.isRegularFile(Objects.requireNonNull(configFile, "Plugin is not initialized"))) {
-      pluginConfig.load(configFile);
+    if (Files.isRegularFile(configFile.get())) {
+      pluginConfig.load(configFile.get());
     }
-    pluginConfig.save(configFile);
+    savePluginConfig();
 
     // sky island world file
-    if (worldsDir != null && Files.isRegularFile(worldsDir)) {
-      islandsWorldManager.load(worldsDir, pluginConfig);
+    if (Files.isRegularFile(worldsDir.get())) {
+      islandsWorldManager.load(worldsDir.get(), pluginConfig);
     }
 
     // language files
-    boolean loadTranslations = Files.isDirectory(Objects.requireNonNull(langDir, "Plugin is not initialized"));
-    Path fallbackLangPath = langDir.resolve("en.json");
+    boolean loadTranslations = Files.isDirectory(langDir.get());
+    Path fallbackLangPath = langDir.get().resolve("en.json");
     if (!Files.isRegularFile(fallbackLangPath)) {
       try {
         if (!loadTranslations) {
-          Files.createDirectories(langDir);
+          Files.createDirectories(langDir.get());
         }
         var messages = new DefaultMessages();
         try (OutputStreamWriter writer = new OutputStreamWriter(Files.newOutputStream(fallbackLangPath))) {
@@ -124,7 +127,7 @@ public final class SkyIslands extends JavaPlugin {
       }
     }
     if (loadTranslations) {
-      hybridTranslationStore.reload(langDir);
+      hybridTranslationStore.reload(langDir.get());
     }
 
     // one of the config options deals with the save interval
@@ -144,9 +147,6 @@ public final class SkyIslands extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    configFile = getDataPath().resolve("config.json");
-    langDir = getDataPath().resolve("lang");
-    worldsDir = getDataPath().resolve("worlds");
     reload();
     hybridTranslationStore.registerGlobal();
 
@@ -245,6 +245,7 @@ public final class SkyIslands extends JavaPlugin {
     return Component.translatable("skyislands." + key);
   }
 
+  @SuppressWarnings("PatternValidation")
   public static Component tl(String key, Map<String, Object> args) {
     if (args.isEmpty()) {
       return tl(key);

@@ -60,19 +60,21 @@ public class ConfigSubCommand extends SubCommand {
 
   public static int setSaveInterval(CommandSender sender, int value) {
     SkyIslands.getInstance().getPluginConfig().setSaveInterval(value);
+    SkyIslands.getInstance().savePluginConfig();
     sender.sendMessage(tl("admin.config.set.success"));
     return SINGLE_SUCCESS;
   }
 
   public static int setDefaultMaxIslands(CommandSender sender, int value) {
     SkyIslands.getInstance().getPluginConfig().setDefaultMaxIslands(value);
+    SkyIslands.getInstance().savePluginConfig();
     sender.sendMessage(tl("admin.config.set.success"));
     return SINGLE_SUCCESS;
   }
 
   public static int setDefaultWorld(CommandSender sender, @Nullable IslandWorld world) {
-    var config = SkyIslands.getInstance().getPluginConfig();
-    config.setDefaultWorld(world == null ? null : world.getWorld().key());
+    SkyIslands.getInstance().getPluginConfig().setDefaultWorld(world == null ? null : world.getWorld().key());
+    SkyIslands.getInstance().savePluginConfig();
     sender.sendMessage(tl("admin.config.set.success"));
     return SINGLE_SUCCESS;
   }

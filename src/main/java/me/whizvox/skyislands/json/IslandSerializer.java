@@ -4,9 +4,7 @@ import com.google.gson.*;
 import me.whizvox.skyislands.island.Island;
 import me.whizvox.skyislands.island.IslandPermission;
 import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.lang.reflect.Type;
