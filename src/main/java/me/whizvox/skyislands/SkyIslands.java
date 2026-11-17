@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import me.whizvox.skyislands.command.util.TranslatableCommandExceptionType;
 import me.whizvox.skyislands.core.DefaultMessages;
 import me.whizvox.skyislands.core.PluginConfiguration;
@@ -47,9 +48,11 @@ public final class SkyIslands extends JavaPlugin {
   private final HybridTranslationStore hybridTranslationStore;
   private final PluginConfiguration pluginConfig;
   private final IslandWorldsManager islandsWorldManager;
-  private final Lazy<Path> configFile, langDir, worldsDir;
+  private final Lazy<Path> configFile, langDir, worldsDir, structuresDir;
   private int prevSaveInterval;
   private @Nullable ScheduledTask saveTask;
+  private final NamespacedKey defaultStructureKey;
+  private final Set<NamespacedKey> registeredStructures;
 
   public SkyIslands() {
     //noinspection ConstantValue
@@ -62,8 +65,11 @@ public final class SkyIslands extends JavaPlugin {
     configFile = Lazy.of(() -> getDataPath().resolve("config.json"));
     langDir = Lazy.of(() -> getDataPath().resolve("lang"));
     worldsDir = Lazy.of(() -> getDataPath().resolve("worlds"));
+    structuresDir = Lazy.of(() -> getDataPath().resolve("structures"));
     prevSaveInterval = -1;
     saveTask = null;
+    defaultStructureKey = key("sky_island_basic");
+    registeredStructures = new ObjectArraySet<>();
   }
 
   private void doSave() {
@@ -81,12 +87,16 @@ public final class SkyIslands extends JavaPlugin {
     return pluginConfig;
   }
 
-  public void savePluginConfig() {
-    pluginConfig.save(configFile.get());
-  }
-
   public IslandWorldsManager getIslandsWorldManager() {
     return islandsWorldManager;
+  }
+
+  public NamespacedKey getDefaultStructureKey() {
+    return defaultStructureKey;
+  }
+
+  public void savePluginConfig() {
+    pluginConfig.save(configFile.get());
   }
 
   public void reload() {
@@ -143,6 +153,42 @@ public final class SkyIslands extends JavaPlugin {
         info("Scheduled island worlds save task to run every {0} minutes", prevSaveInterval);
       }
     }
+
+    registeredStructures.forEach(key -> Bukkit.getStructureManager().unregisterStructure(key));
+    registeredStructures.clear();
+    structuresDir.act(dir -> {
+      if (Files.isDirectory(dir)) {
+        try (var files = Files.walk(dir)) {
+          files
+              .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().endsWith(".nbt"))
+              .forEach(path -> {
+                String fileName = path.getFileName().toString();
+                NamespacedKey key = key(fileName.substring(0, fileName.length() - 4));
+                if (key != null) {
+                  try (InputStream in = Files.newInputStream(path)) {
+                    Structure structure = Bukkit.getStructureManager().loadStructure(in);
+                    Bukkit.getStructureManager().registerStructure(key, structure);
+                    registeredStructures.add(key);
+                    fine("Registered new structure: {0}", key);
+                  } catch (IOException e) {
+                    warning(e, "Could not read structure file from {0}", path);
+                  }
+                } else {
+                  warning("Attempted to load structure from file whose name is an invalid key value: {0}", fileName);
+                }
+              });
+        } catch (IOException e) {
+          throw new RuntimeException("Could not read from structures directory at " + dir, e);
+        }
+        info("Registered {0} structures", registeredStructures.size());
+      } else {
+        try {
+          Files.createDirectories(dir);
+        } catch (IOException e) {
+          throw new RuntimeException("Could not create structures directory at " + dir, e);
+        }
+      }
+    });
   }
 
   @Override
@@ -163,10 +209,7 @@ public final class SkyIslands extends JavaPlugin {
     try (InputStream in = getResource("sky_island_basic.nbt")) {
       if (in != null) {
         Structure islandStructure = Bukkit.getStructureManager().loadStructure(in);
-        Bukkit.getStructureManager().registerStructure(
-            Objects.requireNonNull(key("sky_island_basic")),
-            islandStructure
-        );
+        Bukkit.getStructureManager().registerStructure(defaultStructureKey, islandStructure);
       } else {
         throw new RuntimeException("Sky island structure file is missing. This should not happen!");
       }

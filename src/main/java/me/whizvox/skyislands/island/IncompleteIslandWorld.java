@@ -1,10 +1,13 @@
 package me.whizvox.skyislands.island;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import me.whizvox.skyislands.SkyIslands;
 import me.whizvox.skyislands.util.IslandHelper;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3i;
 
 import java.util.*;
 
@@ -22,6 +25,8 @@ public class IncompleteIslandWorld {
   private int maxIslands;
   private int worldBorderDiameter;
   private final Set<IslandPermission> defaultPermissions;
+  private NamespacedKey structureKey;
+  private final Vector3i structureOffset;
 
   public IncompleteIslandWorld() {
     worldName = null;
@@ -31,6 +36,8 @@ public class IncompleteIslandWorld {
     maxIslands = 1_000_000;
     worldBorderDiameter = MAX_WORLD_BORDER_CHUNKS;
     defaultPermissions = new ObjectArraySet<>();
+    structureKey = SkyIslands.getInstance().getDefaultStructureKey();
+    structureOffset = new Vector3i();
   }
 
   public Optional<String> getWorldName() {
@@ -59,6 +66,14 @@ public class IncompleteIslandWorld {
 
   public Collection<IslandPermission> getDefaultPermissions() {
     return Collections.unmodifiableSet(defaultPermissions);
+  }
+
+  public NamespacedKey getStructureKey() {
+    return structureKey;
+  }
+
+  public Vector3i getStructureOffset() {
+    return structureOffset;
   }
 
   public void setWorldName(String worldName) {
@@ -93,6 +108,14 @@ public class IncompleteIslandWorld {
       return true;
     }
     return false;
+  }
+
+  public void setStructureKey(NamespacedKey structureKey) {
+    this.structureKey = structureKey;
+  }
+
+  public void setStructureOffset(Vector3i offset) {
+    structureOffset.set(offset);
   }
 
 }

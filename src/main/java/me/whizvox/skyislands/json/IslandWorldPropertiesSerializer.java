@@ -3,6 +3,8 @@ package me.whizvox.skyislands.json;
 import com.google.gson.*;
 import me.whizvox.skyislands.island.IslandPermission;
 import me.whizvox.skyislands.island.IslandWorldProperties;
+import org.bukkit.NamespacedKey;
+import org.joml.Vector3i;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -14,14 +16,22 @@ public class IslandWorldPropertiesSerializer implements JsonSerializer<IslandWor
     @Override
     public IslandWorldProperties deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         JsonObject root = json.getAsJsonObject();
-        int buildLimitSize = root.get("buildLimitSize").getAsInt();
-        int plotSize = root.get("plotSize").getAsInt();
-        int maxIslands = root.get("maxIslands").getAsInt();
         List<IslandPermission> defaultPermissions = new ArrayList<>();
         root.getAsJsonArray("defaultPermissions").forEach(permJson ->
             defaultPermissions.add(IslandPermission.valueOf(permJson.getAsString()))
         );
-        return new IslandWorldProperties(buildLimitSize, plotSize, maxIslands, defaultPermissions);
+        return new IslandWorldProperties(
+            root.get("buildLimitSize").getAsInt(),
+            root.get("plotSize").getAsInt(),
+            root.get("maxIslands").getAsInt(),
+            defaultPermissions,
+            NamespacedKey.fromString(root.get("structure").getAsString()),
+            new Vector3i(
+                root.get("structureOffsetX").getAsInt(),
+                root.get("structureOffsetY").getAsInt(),
+                root.get("structureOffsetZ").getAsInt()
+            )
+        );
     }
 
     @Override
@@ -33,6 +43,10 @@ public class IslandWorldPropertiesSerializer implements JsonSerializer<IslandWor
         JsonArray defPermsArr = new JsonArray();
         src.getDefaultPermissions().forEach(perm -> defPermsArr.add(perm.name()));
         root.add("defaultPermissions", defPermsArr);
+        root.addProperty("structure", src.getStructureKey().asString());
+        root.addProperty("structureOffsetX", src.getStructureOffset().x);
+        root.addProperty("structureOffsetY", src.getStructureOffset().y);
+        root.addProperty("structureOffsetZ", src.getStructureOffset().z);
         return root;
     }
 

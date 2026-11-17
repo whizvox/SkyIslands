@@ -140,7 +140,9 @@ public class SetupSubCommand extends SubCommand {
         setupWorld.getBuildAreaDiameter(),
         setupWorld.getPlotDiameter(),
         setupWorld.getMaxIslands(),
-        setupWorld.getDefaultPermissions()
+        setupWorld.getDefaultPermissions(),
+        setupWorld.getStructureKey(),
+        setupWorld.getStructureOffset()
     ));
     if (getInstance().getIslandsWorldManager().addWorld(islandWorld)) {
       sender.sendMessage(tl("setup.create.success", Map.of("world", islandWorld.getWorld().getKey())));

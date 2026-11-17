@@ -26,6 +26,7 @@ public final class IslandWorld {
   private Location lobby;
   private int lastAssignedId;
 
+
   public IslandWorld(World world,
                      IslandWorldProperties properties,
                      List<Island> islands,

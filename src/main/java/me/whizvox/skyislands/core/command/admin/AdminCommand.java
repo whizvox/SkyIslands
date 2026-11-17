@@ -11,6 +11,7 @@ public class AdminCommand extends CommandDelegator {
   @Override
   public void addAllSubCommands() {
     add(new ConfigSubCommand());
+    add(new GroupSubCommand());
   }
 
 }

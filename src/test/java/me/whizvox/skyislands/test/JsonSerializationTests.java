@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3i;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,7 @@ public class JsonSerializationTests {
   @Test
   void json_islandWorldProperties() {
     IslandWorldProperties o1 = new IslandWorldProperties();
-    IslandWorldProperties o2 = new IslandWorldProperties(1000, 10000, 1_000_002, List.of(IslandPermission.BUILD, IslandPermission.INTERACT_BLOCKS, IslandPermission.HURT_OTHER_ENTITIES));
+    IslandWorldProperties o2 = new IslandWorldProperties(1000, 10000, 1_000_002, List.of(IslandPermission.BUILD, IslandPermission.INTERACT_BLOCKS, IslandPermission.HURT_OTHER_ENTITIES), SkyIslands.getInstance().getDefaultStructureKey(), new Vector3i(4, 5, 3));
     assertEquals(o1, GSON.fromJson(GSON.toJson(o1), IslandWorldProperties.class));
     assertEquals(o2, GSON.fromJson(GSON.toJson(o2), IslandWorldProperties.class));
   }
@@ -84,7 +85,7 @@ public class JsonSerializationTests {
     Island i1 = island1(world);
     Island i2 = island2(world);
     IslandWorld o1 = new IslandWorld(world, new Location(world, 0, 0, 0), new IslandWorldProperties());
-    IslandWorld o2 = new IslandWorld(world, new IslandWorldProperties(100, 1000, 1_000_001, List.of(IslandPermission.BUILD, IslandPermission.HURT_FRIENDLY_ENTITIES, IslandPermission.INTERACT_CONTAINERS)), List.of(i1, i2), new Location(world, 50, 40, 11), 2);
+    IslandWorld o2 = new IslandWorld(world, new IslandWorldProperties(100, 1000, 1_000_001, List.of(IslandPermission.BUILD, IslandPermission.HURT_FRIENDLY_ENTITIES, IslandPermission.INTERACT_CONTAINERS), SkyIslands.getInstance().getDefaultStructureKey(), new Vector3i(1, 2, 3)), List.of(i1, i2), new Location(world, 50, 40, 11), 2);
     assertEquals(o1, GSON.fromJson(GSON.toJson(o1), IslandWorld.class));
     assertEquals(o2, GSON.fromJson(GSON.toJson(o2), IslandWorld.class));
   }

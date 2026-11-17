@@ -83,11 +83,21 @@ public class DefaultMessages {
             <gray>-</gray> Default World: <yellow><default_world></yellow> <light_purple><hover:show_text:'The island world to default to if a player creates a new island.<newline>If this is not set, the player must specify the world when creating an island.<newline>When creating an island world for the first time, this will be updated.<newline>Default: <red>NOT SET</red>'>[?]</hover></light_purple> <green><hover:show_text:'<i>Click to set</i>'><click:suggest_command:'/islandadmin config set defaultWorld '>[+]</click></hover></green> <red><hover:show_text:'<i>Click to unset</i>'><click:run_command:'/islandadmin config set defaultWorld'>[-]</click></hover></red>
             <gray>-</gray> Groups: <groups> <light_purple><hover:show_text:'Permission groups for island owners.<newline>The user requires the <yellow>skyislands.group.<gold><i>name</i></gold></yellow> permission to affect them.'>[?]</hover></light_purple> <green><hover:show_text:'<i>Click to add new group</i>'><click:suggest_command:'/islandadmin group create '>[+]</click></hover></green> <aqua><hover:show_text:'<i>Click to modify group</i>'><click:suggest_command:'/islandadmin group modify '>[*]</click></hover></aqua> <red><hover:show_text:'<i>Click to remove group</i>'><click:suggest_command:'/islandadmin group remove '>[-]</click></hover></red>""");
         minimsg("admin.config.set.success", "Configuration successfully updated.");
+        minimsg("admin.group.list", "<gradient:blue:aqua>SkyIslands</gradient> Groups: <groups>");
+        minimsg("admin.group.add.conflict", "A group already exists with that name.");
+        minimsg("admin.group.add.success", "Group was successfully added.");
+        minimsg("admin.group.edit.displayName.cannotBeEmpty", "Display name cannot be empty");
+        minimsg("admin.group.edit.displayName.success", "Display name for <yellow><group></yellow> has been updated to <value>");
+        minimsg("admin.group.edit.maxIslands.success", "Max islands for <yellow><group></yellow> has been updated to <value>");
+        minimsg("admin.group.edit.maxMembers.success", "Max members for <yellow><group></yellow> has been updated to <value>");
+        minimsg("admin.group.edit.maxVisitors.success", "Max visitors for <yellow><group></yellow> has been updated to <value>");
+        minimsg("admin.group.delete.success", "Successfully deleted group <name>");
         minimsg("argument.buildLimitTooLarge", "Island build limit size cannot exceed the plot size");
         minimsg("argument.worldAlreadyExists", "That world already exists");
         minimsg("argument.invalidWorldName", "Invalid world name, must only contain lowercase letters, numbers, and/or underscores (_)");
         minimsg("argument.unknownEnumValue", "Unknown value, must be one of the following: <values>");
         minimsg("argument.skyIslandWorld.invalid", "Not a sky island world: <yellow><value></yellow>");
+        minimsg("argument.islandGroup.unknown", "Unknown island group: <name>");
     }
 
 }

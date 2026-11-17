@@ -3,6 +3,7 @@ package me.whizvox.skyislands.util;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @NotNullByDefault
@@ -21,6 +22,14 @@ public class Lazy<T> {
       return obj;
     }
     return obj = supplier.get();
+  }
+
+  public void act(Consumer<T> consumer) {
+    consumer.accept(get());
+  }
+
+  public void clear() {
+    obj = null;
   }
 
   public static <T> Lazy<T> of(Supplier<T> supplier) {

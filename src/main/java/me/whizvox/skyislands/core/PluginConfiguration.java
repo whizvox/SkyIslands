@@ -1,6 +1,7 @@
 package me.whizvox.skyislands.core;
 
 import me.whizvox.skyislands.SkyIslands;
+import me.whizvox.skyislands.island.IslandGroup;
 import me.whizvox.skyislands.island.IslandGroups;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -33,6 +34,7 @@ public class PluginConfiguration {
     defaultMaxIslands = 1_000_000;
     defaultWorld = null;
     groups = new IslandGroups();
+    groups.addGroup(new IslandGroup("default"));
   }
 
   public int getSaveInterval() {

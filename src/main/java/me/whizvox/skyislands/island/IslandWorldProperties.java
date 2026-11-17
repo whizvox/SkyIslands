@@ -1,6 +1,11 @@
 package me.whizvox.skyislands.island;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import me.whizvox.skyislands.SkyIslands;
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.structure.Structure;
+import org.joml.Vector3i;
 
 import java.util.*;
 
@@ -15,21 +20,33 @@ public class IslandWorldProperties {
   private final int plotSize;
   private final Set<IslandPermission> defaultPermissions;
   private int maxIslands;
+  private NamespacedKey structureKey;
+  private final Vector3i structureOffset;
+  private Structure structure;
 
   public IslandWorldProperties(int buildLimitSize, int plotSize, int maxIslands,
-                               Collection<IslandPermission> defaultPermissions) {
+                               Collection<IslandPermission> defaultPermissions, NamespacedKey structureKey,
+                               Vector3i structureOffset) {
     this.buildLimitSize = buildLimitSize;
     this.plotSize = plotSize;
     this.maxIslands = maxIslands;
     this.defaultPermissions = new ObjectArraySet<>(defaultPermissions);
+    this.structureKey = structureKey;
+    this.structureOffset = structureOffset;
+    resolveStructure();
   }
 
   public IslandWorldProperties(int buildLimitSize, int plotSize) {
-    this(buildLimitSize, plotSize, DEFAULT_MAX_ISLANDS, List.of());
+    this(buildLimitSize, plotSize, DEFAULT_MAX_ISLANDS, List.of(), SkyIslands.getInstance().getDefaultStructureKey(), new Vector3i(0, 0, 0));
   }
 
   public IslandWorldProperties() {
-    this(DEFAULT_BUILD_LIMIT_CHUNKS, DEFAULT_PLOT_SIZE_CHUNKS, DEFAULT_MAX_ISLANDS, List.of());
+    this(DEFAULT_BUILD_LIMIT_CHUNKS, DEFAULT_PLOT_SIZE_CHUNKS, DEFAULT_MAX_ISLANDS, List.of(),
+        SkyIslands.getInstance().getDefaultStructureKey(), new Vector3i(0, 0 ,0));
+  }
+
+  private void resolveStructure() {
+    structure = Bukkit.getStructureManager().getStructure(structureKey);
   }
 
   public int getBuildLimitSize() {
@@ -44,12 +61,29 @@ public class IslandWorldProperties {
     return maxIslands;
   }
 
-  public void setMaxIslands(int maxIslands) {
-    this.maxIslands = maxIslands;
+  public NamespacedKey getStructureKey() {
+    return structureKey;
+  }
+
+  public Structure getStructure() {
+    return structure;
+  }
+
+  public Vector3i getStructureOffset() {
+    return new Vector3i(structureOffset);
   }
 
   public Set<IslandPermission> getDefaultPermissions() {
     return Collections.unmodifiableSet(defaultPermissions);
+  }
+
+  public void setMaxIslands(int maxIslands) {
+    this.maxIslands = maxIslands;
+  }
+
+  public void setStructure(Structure structure, Vector3i offset) {
+    this.structure = structure;
+    structureOffset.set(offset);
   }
 
   /**
@@ -70,15 +104,14 @@ public class IslandWorldProperties {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     IslandWorldProperties that = (IslandWorldProperties) o;
-    return buildLimitSize == that.buildLimitSize &&
-        plotSize == that.plotSize &&
-        maxIslands == that.maxIslands &&
-        defaultPermissions.equals(that.defaultPermissions);
+    return buildLimitSize == that.buildLimitSize && plotSize == that.plotSize && maxIslands == that.maxIslands &&
+        Objects.equals(defaultPermissions, that.defaultPermissions) && Objects.equals(structure, that.structure) &&
+        Objects.equals(structureOffset, that.structureOffset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(buildLimitSize, plotSize, defaultPermissions, maxIslands);
+    return Objects.hash(buildLimitSize, plotSize, defaultPermissions, maxIslands, structure, structureOffset);
   }
 
   @Override
@@ -88,6 +121,8 @@ public class IslandWorldProperties {
         ", plotSize=" + plotSize +
         ", defaultPermissions=" + defaultPermissions +
         ", maxIslands=" + maxIslands +
+        ", structure=" + structure +
+        ", structureOffset=" + structureOffset +
         '}';
   }
 
