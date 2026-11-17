@@ -114,8 +114,8 @@ public final class SkyIslands extends JavaPlugin {
     }
     savePluginConfig();
 
-    // sky island world file
-    if (Files.isRegularFile(worldsDir.get())) {
+    // sky island world directory
+    if (Files.isDirectory(worldsDir.get())) {
       islandsWorldManager.load(worldsDir.get(), pluginConfig);
     }
 

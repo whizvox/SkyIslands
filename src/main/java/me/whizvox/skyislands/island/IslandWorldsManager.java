@@ -3,6 +3,7 @@ package me.whizvox.skyislands.island;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.whizvox.skyislands.SkyIslands;
 import me.whizvox.skyislands.core.PluginConfiguration;
+import me.whizvox.skyislands.util.IslandHelper;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -145,7 +146,7 @@ public class IslandWorldsManager {
             } catch (IOException e) {
               warning(e, "Could not delete world folder {0}", worldPath);
               messageConsumer.accept(tl("world.delete.errorDeletingFromDisk", Map.of(
-                  "world", world.getWorld().getKey(),
+                  "world", world.getWorldKey(),
                   "error", e.getMessage()
               )));
             }
@@ -200,8 +201,8 @@ public class IslandWorldsManager {
           .forEach(path -> {
             try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(path))) {
               IslandWorld world = SkyIslands.getInstance().getGson().fromJson(reader, IslandWorld.class);
-              Key key = world.getWorld().key();
-              worlds.put(key, world);
+              IslandHelper.getVoidWorldCreator(world.getWorldKey()).createWorld();
+              worlds.put(world.getWorldKey(), world);
             } catch (IOException e) {
               severe(e, "Could not read world file at `{0}`", path);
             }

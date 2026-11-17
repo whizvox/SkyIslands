@@ -24,6 +24,12 @@ public class DefaultMessages {
     }
 
     private void addAll() {
+        minimsg("general.emptyList", "<italic>(empty)</italic>");
+        minimsg("general.notSet", "<red>NOT SET</red>");
+        minimsg("general.xyz", "<yellow><x></yellow>, <yellow><y></yellow>, <yellow><z></yellow>");
+        minimsg("general.location", "<yellow><x></yellow>, <yellow><y></yellow>, <yellow><z></yellow> (<aqua><yaw></aqua>, <aqua><pitch></aqua>) in <yellow><world_name></yellow>");
+        minimsg("general.islandGroup", "<aqua><hover:show_text:'Display Name: <display_name><newline>Max Islands: <yellow><max_islands></yellow><newline>Max Members: <yellow><max_members></yellow><newline>Max Visitors: <yellow><max_visitors></yellow>'><name></hover></aqua>");
+        minimsg("general.islandWorld", "<hover:show_text:'<i>Click to show detailed info</i>'><yellow><u><name></u></yellow></hover>");
         minimsg("command.version", "<bold>[<gradient:blue:aqua>SkyIslands</gradient>]</bold> Version: <yellow><version></yellow>");
         minimsg("create.self", "Successfully created your own island! Run <green><click:run_command:'/island home'>/island home</click></green> to go there.");
         minimsg("create.other", "Successfully created an island for <aqua><player></aqua>.");
@@ -34,18 +40,18 @@ public class DefaultMessages {
         minimsg("create.maxWorldIslands", "That world has run out of available islands!");
         minimsg("create.noDefaultWorld", "You must specify the world you wish to create your island in.");
         minimsg("create.noWorlds", "Cannot create an island as there are no island worlds.");
-        minimsg("setup.success", "A new sky island world has been set up. Run <click:run_command:'/island setup help'><yellow>/island setup help</yellow></click> for more information.");
-        minimsg("setup.alreadySettingUp", "A sky island world is already being set up.");
-        minimsg("setup.alreadyExists", "A sky island world already exists. You cannot have more than one per server.");
-        minimsg("setup.noneFound", "No sky island world is currently being set up.");
-        minimsg("setup.set.worldName", "World name has been updated");
-        minimsg("setup.set.lobby", "Lobby location has been updated");
-        minimsg("setup.set.plotDiameter", "Plot size has been updated");
-        minimsg("setup.set.buildAreaDiameter", "Build area size has been updated");
-        minimsg("setup.set.maxIslands", "Max island count has been updated");
-        minimsg("setup.set.worldBorderDiameter", "World border size has been updated");
-        minimsg("setup.set.defaultPermission", "Default visitor permission has been toggled");
-        minimsg("setup.info", """
+        minimsg("admin.setup.success", "A new sky island world has been set up. Run <click:run_command:'/island setup help'><yellow>/island setup help</yellow></click> for more information.");
+        minimsg("admin.setup.alreadySettingUp", "A sky island world is already being set up.");
+        minimsg("admin.setup.alreadyExists", "A sky island world already exists. You cannot have more than one per server.");
+        minimsg("admin.setup.noneFound", "No sky island world is currently being set up.");
+        minimsg("admin.setup.set.worldName", "World name has been updated");
+        minimsg("admin.setup.set.lobby", "Lobby location has been updated");
+        minimsg("admin.setup.set.plotDiameter", "Plot size has been updated");
+        minimsg("admin.setup.set.buildAreaDiameter", "Build area size has been updated");
+        minimsg("admin.setup.set.maxIslands", "Max island count has been updated");
+        minimsg("admin.setup.set.worldBorderDiameter", "World border size has been updated");
+        minimsg("admin.setup.set.defaultPermission", "Default visitor permission has been toggled");
+        minimsg("admin.setup.info", """
             <gray>=-=</gray> <aqua><b>Information for Sky Island World</b></aqua> <gray>=-=</gray>
             <click:suggest_command:'/island setup set name '><green>[+]</green></click> World Name: <yellow><world_name></yellow>
             <click:suggest_command:'/island setup set lobby '><green>[+]</green></click> Lobby Location: <lobby>
@@ -53,7 +59,7 @@ public class DefaultMessages {
             <click:suggest_command:'/island setup set plot '><green>[+]</green></click> Plot Diameter: <yellow><plot></yellow> chunks
             <click:suggest_command:'/island setup set buildArea '><green>[+]</green></click> Build Area Diameter: <yellow><build_area></yellow>
             <click:suggest_command:'/island setup toggle '><green>[+]</green></click> Default Permissions: <default_permissions>""");
-        minimsg("setup.help", """
+        minimsg("admin.setup.help", """
             <gray>=-=</gray> <aqua><b>Sky Island World Setup Commands</b></aqua> <gray>=-=</gray>
             <gray>-</gray> Base Command: <yellow>/island setup <gold>...</gold></yellow>
             <gray>-</gray> <yellow>set worldName <gold><string></gold></yellow>: <red>(required)</red> World name
@@ -65,16 +71,12 @@ public class DefaultMessages {
             <gray>-</gray> <yellow>toggle <gold><permission></gold></yellow>: Default visitor permissions
             <gray>-</gray> <yellow>info</yellow>: Display all information about the world
             <gray>-</gray> <yellow>create</yellow>: Attempt to create the world""");
-        minimsg("general.emptyList", "<italic>(empty)</italic>");
-        minimsg("general.notSet", "<red>NOT SET</red>");
-        minimsg("general.location", "<yellow><x></yellow>, <yellow><y></yellow>, <yellow><z></yellow> (<aqua><yaw></aqua>, <aqua><pitch></aqua>) in <yellow><world_name></yellow>");
-        minimsg("general.islandGroup", "<aqua><hover:show_text:'Display Name: <display_name><newline>Max Islands: <yellow><max_islands></yellow><newline>Max Members: <yellow><max_members></yellow><newline>Max Visitors: <yellow><max_visitors></yellow>'><name></hover></aqua>");
-        minimsg("setup.create.worldNameNotSet", "World name is not set. You should run <click:suggest_command:'/island setup set name '><i><green>/island setup set name <gold>\\<worldName></gold></green></i></click>");
-        minimsg("setup.create.lobbyNotSet", "Lobby is not set. Run <click:suggest_command:'/island setup set lobby '><yellow>/island setup set lobby <gold>\\<location></gold></yellow></click>.");
-        minimsg("setup.create.invalidWorldName", "World name is not valid. You may only use lowercase letters, numbers, and underscores (i.e. overworld, sky_islands, nether2).");
-        minimsg("setup.create.success", "Successfully created a new sky island world: <yellow><world></yellow>");
-        minimsg("world.delete.success", "Successfully deleted sky island world");
-        minimsg("world.delete.errorDeletingFromDisk", "Encountered an error trying to delete the world folder of <yellow><world></yellow>:<newline><italic><error></italic><newline>Check the logs for more details.");
+        minimsg("admin.setup.create.worldNameNotSet", "World name is not set. You should run <click:suggest_command:'/island setup set name '><i><green>/island setup set name <gold>\\<worldName></gold></green></i></click>");
+        minimsg("admin.setup.create.lobbyNotSet", "Lobby is not set. Run <click:suggest_command:'/island setup set lobby '><yellow>/island setup set lobby <gold>\\<location></gold></yellow></click>.");
+        minimsg("admin.setup.create.invalidWorldName", "World name is not valid. You may only use lowercase letters, numbers, and underscores (i.e. overworld, sky_islands, nether2).");
+        minimsg("admin.setup.create.success", "Successfully created a new sky island world: <yellow><world></yellow>");
+        minimsg("admin.world.delete.success", "Successfully deleted sky island world");
+        minimsg("admin.world.delete.errorDeletingFromDisk", "Encountered an error trying to delete the world folder of <yellow><world></yellow>:<newline><italic><error></italic><newline>Check the logs for more details.");
         minimsg("lobby.teleport", "Teleporting to lobby...");
         minimsg("admin.config.info", """
             <bold>[<gradient:blue:aqua>SkyIslands</gradient>]</bold> <aqua><b>Configuration Information</b></aqua>
@@ -92,6 +94,16 @@ public class DefaultMessages {
         minimsg("admin.group.edit.maxMembers.success", "Max members for <yellow><group></yellow> has been updated to <value>");
         minimsg("admin.group.edit.maxVisitors.success", "Max visitors for <yellow><group></yellow> has been updated to <value>");
         minimsg("admin.group.delete.success", "Successfully deleted group <name>");
+        minimsg("admin.reload", "[<gradient:blue:aqua>SkyIslands</gradient>] Reload complete");
+        minimsg("admin.world.list", "<gradient:blue:aqua>SkyIslands</gradient> Worlds: <worlds>");
+        minimsg("admin.world.info", """
+            [<gradient:blue:aqua>SkyIslands</gradient>] World Information:
+            - Key: <yellow><key></yellow>, UUID: <aqua><uuid></aqua>
+            - Lobby: <lobby>
+            - Islands: <yellow><island_count></yellow> / <aqua><max_islands></aqua>
+            - Plot: <yellow><plot></yellow> chunks, Build Area: <yellow><build_area></yellow> chunks
+            - Default Visitor Permissions: <default_permissions>
+            - Structure: <yellow><structure></yellow> at <structure_offset>""");
         minimsg("argument.buildLimitTooLarge", "Island build limit size cannot exceed the plot size");
         minimsg("argument.worldAlreadyExists", "That world already exists");
         minimsg("argument.invalidWorldName", "Invalid world name, must only contain lowercase letters, numbers, and/or underscores (_)");

@@ -1,4 +1,4 @@
-package me.whizvox.skyislands.core.command.island;
+package me.whizvox.skyislands.core.command.admin;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -15,19 +15,18 @@ import me.whizvox.skyislands.island.IncompleteIslandWorld;
 import me.whizvox.skyislands.island.IslandWorld;
 import me.whizvox.skyislands.island.IslandWorldProperties;
 import me.whizvox.skyislands.util.ComponentHelper;
+import me.whizvox.skyislands.util.IslandHelper;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.*;
-import org.bukkit.block.Biome;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.generator.BiomeProvider;
-import org.bukkit.generator.ChunkGenerator;
-import org.bukkit.generator.WorldInfo;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -39,7 +38,7 @@ import static me.whizvox.skyislands.SkyIslands.*;
 @NotNullByDefault
 public class SetupSubCommand extends SubCommand {
 
-  public static final Permission PERMISSION = perm("setup");
+  public static final Permission PERMISSION = perm("admin.setup");
 
   public SetupSubCommand() {
     super("setup", PERMISSION);
@@ -48,9 +47,9 @@ public class SetupSubCommand extends SubCommand {
   public static int setupWorld(CommandSender sender) throws CommandSyntaxException {
     IncompleteIslandWorld world = new IncompleteIslandWorld();
     if (SkyIslands.getInstance().getIslandsWorldManager().setIncompleteWorld(world)) {
-      sender.sendMessage(tl("setup.success"));
+      sender.sendMessage(tl("admin.setup.success"));
     } else {
-      throw cmdex("setup.alreadySettingUp");
+      throw cmdex("admin.setup.alreadySettingUp");
     }
     return SINGLE_SUCCESS;
   }
@@ -68,7 +67,7 @@ public class SetupSubCommand extends SubCommand {
       } else {
         defaultPermissionsText = tl("general.emptyList");
       }
-      sender.sendMessage(tl("setup.info", Map.of(
+      sender.sendMessage(tl("admin.setup.info", Map.of(
           "world_name", world.getWorldName().map(name -> (Component) Component.text(name)).orElse(tl("general.notSet")),
           "lobby", world.getLobby().map(ComponentHelper::location).orElse(tl("general.notSet")),
           "world_border", world.getWorldBorderDiameter(),
@@ -81,7 +80,7 @@ public class SetupSubCommand extends SubCommand {
   }
 
   public static int setupShowHelp(CommandSender sender) {
-    sender.sendMessage(tl("setup.help"));
+    sender.sendMessage(tl("admin.setup.help"));
     return SINGLE_SUCCESS;
   }
 
@@ -89,15 +88,15 @@ public class SetupSubCommand extends SubCommand {
     SkyIslands.getInstance().getIslandsWorldManager().getIncompleteWorld().ifPresentOrElse(world -> {
       setter.accept(world, value);
       sender.sendMessage(messageSupplier.get());
-    }, () -> sender.sendMessage(tl("setup.noneFound")));
+    }, () -> sender.sendMessage(tl("admin.setup.noneFound")));
     return SINGLE_SUCCESS;
   }
 
   public static int discardSetupWorld(CommandSender sender) {
     if (SkyIslands.getInstance().getIslandsWorldManager().discardIncompleteWorld()) {
-      sender.sendMessage(tl("setup.discard"));
+      sender.sendMessage(tl("admin.setup.discard"));
     } else {
-      sender.sendMessage(tl("setup.noneFound"));
+      sender.sendMessage(tl("admin.setup.noneFound"));
     }
     return SINGLE_SUCCESS;
   }
@@ -105,38 +104,25 @@ public class SetupSubCommand extends SubCommand {
   public static int createWorld(CommandSender sender)
       throws CommandSyntaxException {
     IncompleteIslandWorld setupWorld = SkyIslands.getInstance().getIslandsWorldManager().getIncompleteWorld()
-        .orElseThrow(() -> cmdex("setup.noneFound"));
-    String worldName = setupWorld.getWorldName().orElseThrow(() -> cmdex("setup.create.worldNameNotSet"));
-    Location lobby = setupWorld.getLobby().orElseThrow(() -> cmdex("setup.create.lobbyNotSet"));
+        .orElseThrow(() -> cmdex("admin.setup.noneFound"));
+    String worldName = setupWorld.getWorldName().orElseThrow(() -> cmdex("admin.setup.create.worldNameNotSet"));
+    Location lobby = setupWorld.getLobby().orElseThrow(() -> cmdex("admin.setup.create.lobbyNotSet"));
     NamespacedKey worldKey = key(worldName);
     if (worldKey == null) {
-      throw cmdex("setup.create.invalidWorldName");
+      throw cmdex("admin.setup.create.invalidWorldName");
     }
     World world = Bukkit.getWorld(worldKey);
     if (world != null) {
-      throw cmdex("setup.create.worldNameConflict");
+      throw cmdex("admin.setup.create.worldNameConflict");
     }
     if (SkyIslands.getInstance().getIslandsWorldManager().getIslandWorld(worldKey).isPresent()) {
       throw new IllegalStateException("Island world exists in plugin registry, but is not a loaded world: " + worldKey);
     }
     world = Objects.requireNonNull(
-        new WorldCreator(worldKey)
-            .type(WorldType.NORMAL)
-            .biomeProvider(new BiomeProvider() {
-              @Override
-              public Biome getBiome(WorldInfo worldInfo, int x, int y, int z) {
-                return Biome.PLAINS;
-              }
-              @Override
-              public List<Biome> getBiomes(WorldInfo worldInfo) {
-                return List.of(Biome.PLAINS);
-              }
-            })
-            .generator(new ChunkGenerator() {})
-            .createWorld(),
+        IslandHelper.getVoidWorldCreator(worldKey).createWorld(),
         "Failed to create sky island world"
     );
-    IslandWorld islandWorld = new IslandWorld(world, lobby, new IslandWorldProperties(
+    IslandWorld islandWorld = new IslandWorld(worldKey, lobby, new IslandWorldProperties(
         setupWorld.getBuildAreaDiameter(),
         setupWorld.getPlotDiameter(),
         setupWorld.getMaxIslands(),
@@ -145,7 +131,7 @@ public class SetupSubCommand extends SubCommand {
         setupWorld.getStructureOffset()
     ));
     if (getInstance().getIslandsWorldManager().addWorld(islandWorld)) {
-      sender.sendMessage(tl("setup.create.success", Map.of("world", islandWorld.getWorld().getKey())));
+      sender.sendMessage(tl("admin.setup.create.success", Map.of("world", islandWorld.getWorldKey())));
     } else {
       Bukkit.unloadWorld(world, false);
       throw new IllegalStateException("Could not create new island world as the key is already used: " + worldKey);
@@ -169,7 +155,7 @@ public class SetupSubCommand extends SubCommand {
                         context.getSource().getSender(),
                         StringArgumentType.getString(context, "worldName"),
                         IncompleteIslandWorld::setWorldName,
-                        () -> tl("setup.set.worldName")
+                        () -> tl("admin.setup.set.worldName")
                     ))
                 )
             )
@@ -179,7 +165,7 @@ public class SetupSubCommand extends SubCommand {
                         context.getSource().getSender(),
                         context.getArgument("location", FinePositionResolver.class).resolve(context.getSource()).toLocation(context.getSource().getPlayerOrThrow().getWorld()),
                         IncompleteIslandWorld::setLobby,
-                        () -> tl("setup.set.lobby")
+                        () -> tl("admin.setup.set.lobby")
                     ))
                 )
             )
@@ -189,7 +175,7 @@ public class SetupSubCommand extends SubCommand {
                         context.getSource().getSender(),
                         IntegerArgumentType.getInteger(context, "diameter"),
                         IncompleteIslandWorld::setWorldBorderDiameter,
-                        () -> tl("setup.set.worldBorder")
+                        () -> tl("admin.setup.set.worldBorder")
                     ))
                 )
             )
@@ -199,7 +185,7 @@ public class SetupSubCommand extends SubCommand {
                         context.getSource().getSender(),
                         IntegerArgumentType.getInteger(context, "diameter"),
                         IncompleteIslandWorld::setPlotDiameter,
-                        () -> tl("setup.set.plotSize")
+                        () -> tl("admin.setup.set.plotSize")
                     ))
                 )
             )
@@ -209,7 +195,7 @@ public class SetupSubCommand extends SubCommand {
                         context.getSource().getSender(),
                         IntegerArgumentType.getInteger(context, "diameter"),
                         IncompleteIslandWorld::setBuildAreaDiameter,
-                        () -> tl("setup.set.worldBorder")
+                        () -> tl("admin.setup.set.worldBorder")
                     ))
                 )
             )
@@ -219,7 +205,7 @@ public class SetupSubCommand extends SubCommand {
                         context.getSource().getSender(),
                         IntegerArgumentType.getInteger(context, "diameter"),
                         IncompleteIslandWorld::setMaxIslands,
-                        () -> tl("setup.set.maxIslands")
+                        () -> tl("admin.setup.set.maxIslands")
                     ))
                 )
             )
@@ -230,7 +216,7 @@ public class SetupSubCommand extends SubCommand {
                     context.getSource().getSender(),
                     IslandPermissionArgumentType.get(context, "permission"),
                     IncompleteIslandWorld::toggleDefaultPermission,
-                    () -> tl("setup.set.defaultPermission")
+                    () -> tl("admin.setup.set.defaultPermission")
                 ))
             )
         )

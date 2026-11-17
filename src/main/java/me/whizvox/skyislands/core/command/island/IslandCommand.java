@@ -10,8 +10,6 @@ public class IslandCommand extends CommandDelegator {
 
   @Override
   public void addAllSubCommands() {
-    add(new VersionSubCommand());
-    add(new SetupSubCommand());
     add(new CreateSubCommand());
   }
 

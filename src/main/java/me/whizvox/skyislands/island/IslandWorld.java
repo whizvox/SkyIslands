@@ -6,9 +6,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.whizvox.skyislands.util.Box2d;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.World;
+import me.whizvox.skyislands.util.Lazy;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.joml.Vector2i;
 
@@ -17,7 +16,8 @@ import java.util.stream.Stream;
 
 public final class IslandWorld {
 
-  private final World world;
+  private final NamespacedKey worldKey;
+  private final Lazy<World> world;
   private final IslandWorldProperties properties;
   private final Int2ObjectMap<IslandInfo> islandsIdMap;
   private final Object2ObjectMap<Vector2i, IslandInfo> islandsPositionMap;
@@ -26,13 +26,13 @@ public final class IslandWorld {
   private Location lobby;
   private int lastAssignedId;
 
-
-  public IslandWorld(World world,
+  public IslandWorld(NamespacedKey worldKey,
                      IslandWorldProperties properties,
                      List<Island> islands,
                      Location lobby,
                      int lastAssignedId) {
-    this.world = world;
+    this.worldKey = worldKey;
+    world = Lazy.of(() -> Objects.requireNonNull(Bukkit.getWorld(worldKey), "Unknown world: " + worldKey));
     this.properties = properties;
     this.lobby = lobby;
     this.lastAssignedId = lastAssignedId;
@@ -51,12 +51,16 @@ public final class IslandWorld {
     });
   }
 
-  public IslandWorld(World world, Location lobby, IslandWorldProperties properties) {
-    this(world, properties, List.of(), lobby, 0);
+  public IslandWorld(NamespacedKey worldKey, Location lobby, IslandWorldProperties properties) {
+    this(worldKey, properties, List.of(), lobby, 0);
+  }
+
+  public NamespacedKey getWorldKey() {
+    return worldKey;
   }
 
   public World getWorld() {
-    return world;
+    return world.get();
   }
 
   public IslandWorldProperties getProperties() {
@@ -109,7 +113,7 @@ public final class IslandWorld {
   }
 
   public Optional<IslandInfo> getIslandIdByLocation(Location loc) {
-    if (loc.getWorld().getUID().equals(world.getUID())) {
+    if (loc.getWorld().getKey().equals(worldKey)) {
       Chunk chunk = loc.getChunk();
       Vector2i position = new Vector2i(chunk.getX() / properties.getPlotSize(),
           chunk.getZ() / properties.getPlotSize());
@@ -131,7 +135,7 @@ public final class IslandWorld {
   }
 
   public boolean setLobby(Location lobby) {
-    if (!lobby.getWorld().getUID().equals(world.getUID())) {
+    if (!lobby.getWorld().getKey().equals(worldKey)) {
       this.lobby = lobby;
       return true;
     }
@@ -164,7 +168,7 @@ public final class IslandWorld {
     }
     var areas = getPlotAndBuildAreas(position);
     Island.OwnerKey ok = new Island.OwnerKey(owner.getUniqueId(), slot);
-    Island.WorldKey wk = new Island.WorldKey(world.getKey(), id);
+    Island.WorldKey wk = new Island.WorldKey(worldKey, id);
     Island island = new Island(ok, wk);
     IslandInfo info = new IslandInfo(island, areas.first(), areas.second());
     islandsIdMap.put(id, info);
@@ -188,7 +192,7 @@ public final class IslandWorld {
     if (o == null || getClass() != o.getClass()) return false;
     IslandWorld that = (IslandWorld) o;
     return lastAssignedId == that.lastAssignedId &&
-        world.key().equals(that.world.key()) &&
+        worldKey.equals(that.worldKey) &&
         properties.equals(that.properties) &&
         islandsIdMap.values().stream().allMatch(info -> Objects.equals(info, that.islandsIdMap.get(info.island().worldKey.id()))) &&
         lobby.equals(that.lobby);
@@ -196,13 +200,13 @@ public final class IslandWorld {
 
   @Override
   public int hashCode() {
-    return Objects.hash(world, properties, islandsIdMap, islandsPositionMap, islandsOwnersMap, islandsOwnerKeysMap, lobby, lastAssignedId);
+    return Objects.hash(worldKey, properties, islandsIdMap, islandsPositionMap, islandsOwnersMap, islandsOwnerKeysMap, lobby, lastAssignedId);
   }
 
   @Override
   public String toString() {
     return "IslandWorld{" +
-        "world=" + world.key() +
+        "worldKey=" + worldKey +
         ", properties=" + properties +
         ", islandsIdMap=" + islandsIdMap +
         ", islandsPositionMap=" + islandsPositionMap +

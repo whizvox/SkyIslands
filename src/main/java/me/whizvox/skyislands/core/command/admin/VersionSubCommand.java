@@ -1,4 +1,4 @@
-package me.whizvox.skyislands.core.command.island;
+package me.whizvox.skyislands.core.command.admin;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;

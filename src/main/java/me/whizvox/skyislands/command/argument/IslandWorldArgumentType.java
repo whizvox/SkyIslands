@@ -26,9 +26,9 @@ public class IslandWorldArgumentType implements CustomArgumentType.Converted<Isl
   public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
     SkyIslands.getInstance().getIslandsWorldManager().getWorlds()
         .filter(world -> world.getWorld().key().toString().toLowerCase().startsWith(builder.getRemainingLowerCase()))
-        .map(world -> world.getWorld().key())
-        .sorted(Key::compareTo)
-        .forEach(key -> builder.suggest(key.toString()));
+        .map(world -> world.getWorld().key().value())
+        .sorted()
+        .forEach(builder::suggest);
     return builder.buildFuture();
   }
 

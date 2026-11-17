@@ -12,6 +12,10 @@ public class AdminCommand extends CommandDelegator {
   public void addAllSubCommands() {
     add(new ConfigSubCommand());
     add(new GroupSubCommand());
+    add(new ReloadSubCommand());
+    add(new WorldSubCommand());
+    add(new VersionSubCommand());
+    add(new SetupSubCommand());
   }
 
 }
