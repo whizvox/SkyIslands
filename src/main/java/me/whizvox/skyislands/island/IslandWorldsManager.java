@@ -69,6 +69,10 @@ public class IslandWorldsManager {
     return Optional.ofNullable(incompleteWorld);
   }
 
+  public Optional<IslandInfo> getFirstIsland(UUID ownerId) {
+    return getIslands(ownerId).min(Comparator.comparing(o -> o.island().getOwnerKey().slot()));
+  }
+
   /**
    * Retrieve a player's island based on their UUID and the slot number of the island.
    * <br>

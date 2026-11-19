@@ -1,7 +1,11 @@
 package me.whizvox.skyislands.island;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import me.whizvox.skyislands.util.AnyLocation;
+import me.whizvox.skyislands.util.Lazy;
 import net.kyori.adventure.key.Key;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -19,19 +23,23 @@ public final class Island {
   private final Set<IslandPermission> visitorPermissions;
   private final Set<UUID> members;
   private final Set<UUID> coOwners;
+  private AnyLocation home;
+  private final Lazy<Location> homeLazy;
   public final LocalDateTime created;
 
-  public Island(OwnerKey ownerKey, WorldKey worldKey, Collection<IslandPermission> visitorPermissions, Collection<UUID> members, Collection<UUID> coOwners, LocalDateTime created) {
+  public Island(OwnerKey ownerKey, WorldKey worldKey, AnyLocation home, Collection<IslandPermission> visitorPermissions, Collection<UUID> members, Collection<UUID> coOwners, LocalDateTime created) {
     this.ownerKey = ownerKey;
     this.worldKey = worldKey;
+    this.home = home;
+    this.homeLazy = Lazy.of(() -> this.home.toLocation(Objects.requireNonNull(Bukkit.getWorld(worldKey.world), "Could not find world: " + worldKey.world)));
     this.visitorPermissions = new ObjectArraySet<>(visitorPermissions);
     this.members = new ObjectArraySet<>(members);
     this.coOwners = new ObjectArraySet<>(coOwners);
     this.created = created;
   }
 
-  public Island(OwnerKey ownerKey, WorldKey worldKey) {
-    this(ownerKey, worldKey, List.of(), List.of(), List.of(), LocalDateTime.now(ZoneOffset.UTC));
+  public Island(OwnerKey ownerKey, WorldKey worldKey, AnyLocation home) {
+    this(ownerKey, worldKey, home, List.of(), List.of(), List.of(), LocalDateTime.now(ZoneOffset.UTC));
   }
 
   public OwnerKey getOwnerKey() {
@@ -40,6 +48,19 @@ public final class Island {
 
   public void setOwnerKey(OwnerKey ownerKey) {
     this.ownerKey = ownerKey;
+  }
+
+  public AnyLocation getAnyHome() {
+    return home;
+  }
+
+  public Location getHome() {
+    return homeLazy.get().clone();
+  }
+
+  public void setHome(AnyLocation home) {
+    this.home = home;
+    this.homeLazy.clear();
   }
 
   public Set<IslandPermission> getVisitorPermissions() {
@@ -94,6 +115,7 @@ public final class Island {
     Island island = (Island) o;
     return ownerKey.equals(island.ownerKey) &&
         worldKey.equals(island.worldKey) &&
+        home.equals(island.home) &&
         visitorPermissions.equals(island.visitorPermissions) &&
         members.equals(island.members) &&
         coOwners.equals(island.coOwners) &&
@@ -102,7 +124,7 @@ public final class Island {
 
   @Override
   public int hashCode() {
-    return Objects.hash(ownerKey, worldKey, visitorPermissions, members, coOwners, created);
+    return Objects.hash(ownerKey, worldKey, home, visitorPermissions, members, coOwners, created);
   }
 
   @Override
@@ -110,6 +132,7 @@ public final class Island {
     return "Island{" +
         "ownerKey=" + ownerKey +
         ", worldKey=" + worldKey +
+        ", home=" + home +
         ", visitorPermissions=" + visitorPermissions +
         ", members=" + members +
         ", coOwners=" + coOwners +

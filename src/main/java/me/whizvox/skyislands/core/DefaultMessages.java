@@ -30,9 +30,10 @@ public class DefaultMessages {
         minimsg("general.location", "<yellow><x></yellow>, <yellow><y></yellow>, <yellow><z></yellow> (<aqua><yaw></aqua>, <aqua><pitch></aqua>) in <yellow><world_name></yellow>");
         minimsg("general.islandGroup", "<aqua><hover:show_text:'Display Name: <display_name><newline>Max Islands: <yellow><max_islands></yellow><newline>Max Members: <yellow><max_members></yellow><newline>Max Visitors: <yellow><max_visitors></yellow>'><name></hover></aqua>");
         minimsg("general.islandWorld", "<hover:show_text:'<i>Click to show detailed info</i>'><yellow><u><name></u></yellow></hover>");
+        minimsg("general.clickToRun", "<i>Click to run</i>");
         minimsg("command.version", "<bold>[<gradient:blue:aqua>SkyIslands</gradient>]</bold> Version: <yellow><version></yellow>");
-        minimsg("create.self", "Successfully created your own island! Run <green><click:run_command:'/island home'>/island home</click></green> to go there.");
-        minimsg("create.other", "Successfully created an island for <aqua><player></aqua>.");
+        minimsg("create.success.self", "Island successfully created! Run <command> to go there.");
+        minimsg("create.success.other", "Successfully created an island for <aqua><player></aqua>.");
         minimsg("create.worldAlreadyExists", "There already exists a sky island world: <yellow><world></yellow>");
         minimsg("create.worldNameConflict", "There already exists a world with that name");
         minimsg("create.noIslandsAllowed", "You are not allowed to create any sky islands.");
@@ -40,6 +41,13 @@ public class DefaultMessages {
         minimsg("create.maxWorldIslands", "That world has run out of available islands!");
         minimsg("create.noDefaultWorld", "You must specify the world you wish to create your island in.");
         minimsg("create.noWorlds", "Cannot create an island as there are no island worlds.");
+        minimsg("teleport.success", "<green>Teleport successful!</green>");
+        minimsg("teleport.success.other", "<green>Successfully teleported </green><yellow><player></yellow>");
+        minimsg("teleport.fail", "<red>Teleport failed!</red>");
+        minimsg("teleport.fail.other", "<red>Failed to teleport <yellow><player></yellow>. Do they have any passengers?</red>");
+        minimsg("teleport.fail.subtitle", "<red>Perhaps you have some passengers on you?</red>");
+        minimsg("home.noIslands", "You have no islands to teleport to");
+        minimsg("home.noIslands.other", "That player has no islands to teleport to");
         minimsg("admin.setup.success", "A new sky island world has been set up. Run <click:run_command:'/island setup help'><yellow>/island setup help</yellow></click> for more information.");
         minimsg("admin.setup.alreadySettingUp", "A sky island world is already being set up.");
         minimsg("admin.setup.alreadyExists", "A sky island world already exists. You cannot have more than one per server.");
@@ -110,6 +118,12 @@ public class DefaultMessages {
         minimsg("argument.unknownEnumValue", "Unknown value, must be one of the following: <values>");
         minimsg("argument.skyIslandWorld.invalid", "Not a sky island world: <yellow><value></yellow>");
         minimsg("argument.islandGroup.unknown", "Unknown island group: <name>");
+        minimsg("argument.teleport.unknownOwner", "Unknown owner player: <name>");
+        minimsg("argument.teleport.unknownTarget", "Unknown target player: <name>");
+        minimsg("argument.teleport.ownerHasNoIslands", "Player <player> has no islands");
+        minimsg("argument.teleport.worldHasNoIslands", "World <yellow><world></yellow> has no islands");
+        minimsg("argument.teleport.notFound", "Island not found");
+        minimsg("argument.teleport.notEnoughInfo", "Requires at least a player or world name");
     }
 
 }

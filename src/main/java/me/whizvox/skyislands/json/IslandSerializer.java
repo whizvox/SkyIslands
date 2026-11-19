@@ -3,6 +3,7 @@ package me.whizvox.skyislands.json;
 import com.google.gson.*;
 import me.whizvox.skyislands.island.Island;
 import me.whizvox.skyislands.island.IslandPermission;
+import me.whizvox.skyislands.util.AnyLocation;
 import net.kyori.adventure.key.Key;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -27,6 +28,7 @@ public class IslandSerializer implements JsonSerializer<Island>, JsonDeserialize
     String worldKeyStr = root.get("world").getAsString();
     Key worldKey = Objects.requireNonNull(NamespacedKey.fromString(worldKeyStr), "Invalid world key: " + worldKeyStr);
     int worldId = root.get("worldId").getAsInt();
+    AnyLocation home = context.deserialize(root.get("home"), AnyLocation.class);
     List<IslandPermission> visitorPermissions = new ArrayList<>();
     root.getAsJsonArray("visitorPermissions").forEach(permJson -> visitorPermissions.add(IslandPermission.valueOf(permJson.getAsString())));
     List<UUID> members = new ArrayList<>();
@@ -35,7 +37,7 @@ public class IslandSerializer implements JsonSerializer<Island>, JsonDeserialize
     root.getAsJsonArray("coOwners").forEach(uuidJson -> coOwners.add(UUID.fromString(uuidJson.getAsString())));
     LocalDateTime created =
         LocalDateTime.from(Instant.ofEpochSecond(root.get("created").getAsLong()).atZone(ZoneOffset.UTC));
-    return new Island(new Island.OwnerKey(ownerId, ownerSlot), new Island.WorldKey(worldKey, worldId), visitorPermissions, members, coOwners, created);
+    return new Island(new Island.OwnerKey(ownerId, ownerSlot), new Island.WorldKey(worldKey, worldId), home, visitorPermissions, members, coOwners, created);
   }
 
   @Override
@@ -45,6 +47,7 @@ public class IslandSerializer implements JsonSerializer<Island>, JsonDeserialize
     root.addProperty("ownerSlot", island.getOwnerKey().slot());
     root.addProperty("world", island.worldKey.world().asString());
     root.addProperty("worldId", island.worldKey.id());
+    root.add("home", context.serialize(island.getAnyHome()));
     JsonArray visitorPermsArr = new JsonArray();
     island.getVisitorPermissions().forEach(perm -> visitorPermsArr.add(perm.name()));
     root.add("visitorPermissions", visitorPermsArr);

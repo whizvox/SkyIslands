@@ -11,12 +11,17 @@ import me.whizvox.skyislands.command.SubCommand;
 import me.whizvox.skyislands.command.argument.IslandWorldArgumentType;
 import me.whizvox.skyislands.island.IslandInfo;
 import me.whizvox.skyislands.island.IslandWorld;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
@@ -66,9 +71,18 @@ public class CreateSubCommand extends SubCommand {
         keepSearching = false;
       }
     }
-    world.createIsland(owner, nextSlot).ifPresentOrElse(_ -> {
+    world.createIsland(owner, nextSlot).ifPresentOrElse(info -> {
       if (sender != owner) {
-        sender.sendMessage(tl("create.success.self"));
+        Component clickableCommand;
+        if (ownedIslands.isEmpty()) {
+          clickableCommand = Component.text("/island home");
+        } else {
+          clickableCommand = Component.text("/island home " + info.island().getOwnerKey().slot());
+        }
+        clickableCommand = clickableCommand.color(NamedTextColor.GREEN)
+            .clickEvent(ClickEvent.runCommand("skyislands:island home " + info.island().getOwnerKey().slot()))
+            .hoverEvent(HoverEvent.showText(tl("general.clickToRun")));
+        sender.sendMessage(tl("create.success.self", Map.of("command", clickableCommand)));
       } else {
         sender.sendMessage(tl("create.success.other"));
       }

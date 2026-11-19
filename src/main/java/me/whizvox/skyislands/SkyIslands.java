@@ -15,6 +15,7 @@ import me.whizvox.skyislands.i18n.HybridTranslationStore;
 import me.whizvox.skyislands.i18n.Messages;
 import me.whizvox.skyislands.island.*;
 import me.whizvox.skyislands.json.*;
+import me.whizvox.skyislands.util.AnyLocation;
 import me.whizvox.skyislands.util.Lazy;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
@@ -42,7 +43,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 @NotNullByDefault
-public final class SkyIslands extends JavaPlugin {
+public class SkyIslands extends JavaPlugin {
 
   private final Gson gson;
   private final HybridTranslationStore hybridTranslationStore;
@@ -237,7 +238,8 @@ public final class SkyIslands extends JavaPlugin {
         .registerTypeAdapter(IslandGroups.class, new IslandGroupsSerializer())
         .registerTypeAdapter(Island.class, new IslandSerializer())
         .registerTypeAdapter(IslandWorldProperties.class, new IslandWorldPropertiesSerializer())
-        .registerTypeAdapter(IslandWorld.class, new IslandWorldSerializer());
+        .registerTypeAdapter(IslandWorld.class, new IslandWorldSerializer())
+        .registerTypeAdapter(AnyLocation.class, new AnyLocationSerializer());
     if (enablePrettyPrinting) {
       builder.setPrettyPrinting();
     }

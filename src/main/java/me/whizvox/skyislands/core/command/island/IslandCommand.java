@@ -11,6 +11,8 @@ public class IslandCommand extends CommandDelegator {
   @Override
   public void addAllSubCommands() {
     add(new CreateSubCommand());
+    add(new TeleportSubCommand());
+    add(new HomeSubCommand());
   }
 
 }

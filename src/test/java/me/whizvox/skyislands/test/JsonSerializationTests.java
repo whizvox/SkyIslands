@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import me.whizvox.skyislands.SkyIslands;
 import me.whizvox.skyislands.core.PluginConfiguration;
 import me.whizvox.skyislands.island.*;
+import me.whizvox.skyislands.util.AnyLocation;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -37,7 +38,8 @@ public class JsonSerializationTests {
   private static Island island1(@Nullable World world) {
     return new Island(
         new Island.OwnerKey(UUID.fromString("935cfc25-954c-4050-b73e-3174c6ce97d0"), 1),
-        new Island.WorldKey(world == null ? NamespacedKey.fromString("skyislands:skyblock") : world.key(), 1)
+        new Island.WorldKey(world == null ? NamespacedKey.fromString("skyislands:skyblock") : world.key(), 1),
+        new AnyLocation(0, 0, 0)
     );
   }
 
@@ -45,6 +47,7 @@ public class JsonSerializationTests {
     return new Island(
         new Island.OwnerKey(UUID.fromString("cc98c56d-4bb3-41e2-aeb5-8d754a3c8cba"), 16),
         new Island.WorldKey(world == null ? NamespacedKey.fromString("skyislands:nether_world") : world.key(), 16792),
+        new AnyLocation(1, -2.45, 3.111, -4, 5),
         List.of(IslandPermission.BUILD, IslandPermission.HURT_HOSTILE_ENTITIES, IslandPermission.INTERACT_ENTITIES, IslandPermission.INTERACT_CONTAINERS),
         List.of(UUID.fromString("7fc234f6-59b2-4e2d-a7b1-6eebe24cc2ed"), UUID.fromString("a862f697-3e57-4dc6-b9bb-9225088e5143"), UUID.fromString("f8a6606b-a51f-4f77-b73c-779e506bd630")),
         List.of(UUID.fromString("e2bb1c43-7d20-4244-a928-1bcc3d843abf"), UUID.fromString("cf0ff18a-2e92-4f9f-801f-855b8d087756")),
@@ -80,12 +83,22 @@ public class JsonSerializationTests {
   }
 
   @Test
+  void json_anyLocation() {
+    AnyLocation o1 = new AnyLocation(0, 0, 0);
+    AnyLocation o2 = new AnyLocation(5, -19, 23);
+    AnyLocation o3 = new AnyLocation(898.68, -3119.41, 99900.223, -56.2F, 87.1223F);
+    assertEquals(o1, GSON.fromJson(GSON.toJson(o1), AnyLocation.class));
+    assertEquals(o2, GSON.fromJson(GSON.toJson(o2), AnyLocation.class));
+    assertEquals(o3, GSON.fromJson(GSON.toJson(o3), AnyLocation.class));
+  }
+
+  @Test
   void json_islandWorld() {
     World world = MockBukkit.getMock().addSimpleWorld("world");
     Island i1 = island1(world);
     Island i2 = island2(world);
-    IslandWorld o1 = new IslandWorld(world, new Location(world, 0, 0, 0), new IslandWorldProperties());
-    IslandWorld o2 = new IslandWorld(world, new IslandWorldProperties(100, 1000, 1_000_001, List.of(IslandPermission.BUILD, IslandPermission.HURT_FRIENDLY_ENTITIES, IslandPermission.INTERACT_CONTAINERS), SkyIslands.getInstance().getDefaultStructureKey(), new Vector3i(1, 2, 3)), List.of(i1, i2), new Location(world, 50, 40, 11), 2);
+    IslandWorld o1 = new IslandWorld(world.getKey(), new Location(world, 0, 0, 0), new IslandWorldProperties());
+    IslandWorld o2 = new IslandWorld(world.getKey(), new IslandWorldProperties(100, 1000, 1_000_001, List.of(IslandPermission.BUILD, IslandPermission.HURT_FRIENDLY_ENTITIES, IslandPermission.INTERACT_CONTAINERS), SkyIslands.getInstance().getDefaultStructureKey(), new Vector3i(1, 2, 3)), List.of(i1, i2), new Location(world, 50, 40, 11), 2);
     assertEquals(o1, GSON.fromJson(GSON.toJson(o1), IslandWorld.class));
     assertEquals(o2, GSON.fromJson(GSON.toJson(o2), IslandWorld.class));
   }

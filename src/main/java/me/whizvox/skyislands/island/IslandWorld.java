@@ -5,9 +5,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.whizvox.skyislands.util.AnyLocation;
 import me.whizvox.skyislands.util.Box2d;
 import me.whizvox.skyislands.util.Lazy;
 import org.bukkit.*;
+import org.bukkit.block.structure.Mirror;
+import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
 import org.joml.Vector2i;
 
@@ -169,8 +172,9 @@ public final class IslandWorld {
     var areas = getPlotAndBuildAreas(position);
     Island.OwnerKey ok = new Island.OwnerKey(owner.getUniqueId(), slot);
     Island.WorldKey wk = new Island.WorldKey(worldKey, id);
-    Island island = new Island(ok, wk);
+    Island island = new Island(ok, wk, new AnyLocation(position.x * 32.0 / 2.0, 64, position.y * 32.0 / 2.0));
     IslandInfo info = new IslandInfo(island, areas.first(), areas.second());
+    properties.getStructure().place(island.getHome(), false, StructureRotation.NONE, Mirror.NONE, 0, 1.0F, new Random());
     islandsIdMap.put(id, info);
     islandsPositionMap.put(position, info);
     islandsOwnersMap.computeIfAbsent(owner.getUniqueId(), _ -> new ArrayList<>()).add(info);
