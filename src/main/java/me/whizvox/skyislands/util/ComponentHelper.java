@@ -24,6 +24,10 @@ public class ComponentHelper {
     ));
   }
 
+  public static Component xyz(Number x, Number y, Number z) {
+    return tl("general.xyz", Map.of("x", x, "y", y, "z", z));
+  }
+
   public static Component joining(String separator, Stream<ComponentLike> stream) {
     List<ComponentLike> list = stream.toList();
     if (list.isEmpty()) {

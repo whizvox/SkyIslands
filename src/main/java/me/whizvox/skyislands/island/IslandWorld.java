@@ -13,6 +13,7 @@ import org.bukkit.block.structure.Mirror;
 import org.bukkit.block.structure.StructureRotation;
 import org.bukkit.entity.Player;
 import org.joml.Vector2i;
+import org.joml.Vector3i;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -172,9 +173,12 @@ public final class IslandWorld {
     var areas = getPlotAndBuildAreas(position);
     Island.OwnerKey ok = new Island.OwnerKey(owner.getUniqueId(), slot);
     Island.WorldKey wk = new Island.WorldKey(worldKey, id);
-    Island island = new Island(ok, wk, new AnyLocation(position.x * 32.0 / 2.0, 64, position.y * 32.0 / 2.0));
+    Vector2i center = areas.right().getCenter();
+    Island island = new Island(ok, wk, new AnyLocation(center.x + 0.5, 64, center.y + 0.5));
     IslandInfo info = new IslandInfo(island, areas.first(), areas.second());
-    properties.getStructure().place(island.getHome(), false, StructureRotation.NONE, Mirror.NONE, 0, 1.0F, new Random());
+    Vector3i offset = properties.getStructureOffset();
+    var structSize = properties.getStructure().getSize();
+    properties.getStructure().place(island.getHome().subtract(structSize.multiply(0.5)).add(offset.x, offset.y, offset.z), false, StructureRotation.NONE, Mirror.NONE, 0, 1.0F, new Random());
     islandsIdMap.put(id, info);
     islandsPositionMap.put(position, info);
     islandsOwnersMap.computeIfAbsent(owner.getUniqueId(), _ -> new ArrayList<>()).add(info);

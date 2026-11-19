@@ -1,5 +1,6 @@
 package me.whizvox.skyislands.core.command.admin;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
@@ -62,6 +63,12 @@ public class WorldSubCommand extends SubCommand {
     return SINGLE_SUCCESS;
   }
 
+  public static int setStructureOffset(CommandSender sender, IslandWorld world, Vector3i offset) {
+    world.getProperties().setStructure(world.getProperties().getStructureKey(), offset);
+    sender.sendMessage(tl("admin.world.set.structureOffset", Map.of("value", ComponentHelper.xyz(offset.x, offset.y, offset.z))));
+    return SINGLE_SUCCESS;
+  }
+
   @Override
   protected void doRegister(LiteralArgumentBuilder<CommandSourceStack> builder) {
     builder
@@ -74,6 +81,27 @@ public class WorldSubCommand extends SubCommand {
                     context.getSource().getSender(),
                     IslandWorldArgumentType.getIslandWorld(context, "world")
                 ))
+            )
+        )
+        .then(Commands.literal("set")
+            .then(Commands.argument("world", IslandWorldArgumentType.islandWorld())
+                .then(Commands.literal("structureOffset")
+                    .then(Commands.argument("x", IntegerArgumentType.integer())
+                        .then(Commands.argument("y", IntegerArgumentType.integer())
+                            .then(Commands.argument("z", IntegerArgumentType.integer())
+                                .executes(context -> setStructureOffset(
+                                    context.getSource().getSender(),
+                                    IslandWorldArgumentType.getIslandWorld(context, "world"),
+                                    new Vector3i(
+                                        IntegerArgumentType.getInteger(context, "x"),
+                                        IntegerArgumentType.getInteger(context, "y"),
+                                        IntegerArgumentType.getInteger(context, "z")
+                                    )
+                                ))
+                            )
+                        )
+                    )
+                )
             )
         );
   }

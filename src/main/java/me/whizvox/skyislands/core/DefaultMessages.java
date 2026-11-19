@@ -112,6 +112,7 @@ public class DefaultMessages {
             - Plot: <yellow><plot></yellow> chunks, Build Area: <yellow><build_area></yellow> chunks
             - Default Visitor Permissions: <default_permissions>
             - Structure: <yellow><structure></yellow> at <structure_offset>""");
+        minimsg("admin.world.set.structureOffset", "Structure offset has been changed to <value>");
         minimsg("argument.buildLimitTooLarge", "Island build limit size cannot exceed the plot size");
         minimsg("argument.worldAlreadyExists", "That world already exists");
         minimsg("argument.invalidWorldName", "Invalid world name, must only contain lowercase letters, numbers, and/or underscores (_)");

@@ -2,6 +2,7 @@ package me.whizvox.skyislands.island;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import me.whizvox.skyislands.SkyIslands;
+import me.whizvox.skyislands.util.Lazy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.structure.Structure;
@@ -22,7 +23,7 @@ public class IslandWorldProperties {
   private int maxIslands;
   private NamespacedKey structureKey;
   private final Vector3i structureOffset;
-  private Structure structure;
+  private final Lazy<Structure> structure;
 
   public IslandWorldProperties(int buildLimitSize, int plotSize, int maxIslands,
                                Collection<IslandPermission> defaultPermissions, NamespacedKey structureKey,
@@ -33,7 +34,7 @@ public class IslandWorldProperties {
     this.defaultPermissions = new ObjectArraySet<>(defaultPermissions);
     this.structureKey = structureKey;
     this.structureOffset = structureOffset;
-    resolveStructure();
+    structure = Lazy.of(() -> Objects.requireNonNull(Bukkit.getStructureManager().getStructure(this.structureKey), "Could not find structure: " + structureKey));
   }
 
   public IslandWorldProperties(int buildLimitSize, int plotSize) {
@@ -43,10 +44,6 @@ public class IslandWorldProperties {
   public IslandWorldProperties() {
     this(DEFAULT_BUILD_LIMIT_CHUNKS, DEFAULT_PLOT_SIZE_CHUNKS, DEFAULT_MAX_ISLANDS, List.of(),
         SkyIslands.getInstance().getDefaultStructureKey(), new Vector3i(0, 0 ,0));
-  }
-
-  private void resolveStructure() {
-    structure = Bukkit.getStructureManager().getStructure(structureKey);
   }
 
   public int getBuildLimitSize() {
@@ -66,7 +63,7 @@ public class IslandWorldProperties {
   }
 
   public Structure getStructure() {
-    return structure;
+    return structure.get();
   }
 
   public Vector3i getStructureOffset() {
@@ -81,8 +78,9 @@ public class IslandWorldProperties {
     this.maxIslands = maxIslands;
   }
 
-  public void setStructure(Structure structure, Vector3i offset) {
-    this.structure = structure;
+  public void setStructure(NamespacedKey structureKey, Vector3i offset) {
+    this.structure.clear();
+    this.structureKey = structureKey;
     structureOffset.set(offset);
   }
 
